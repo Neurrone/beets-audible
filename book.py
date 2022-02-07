@@ -1,0 +1,163 @@
+import re
+from typing import Dict, List, Optional
+
+# This would be much less verbose with dataclasses, only available in Python 3.7+
+# Beets has a minimum Python version requirement of 3.6, hence I'm not using dataclasses here
+
+class Author:
+    asin: str
+    name: str
+    def __init__(self, asin, name): 
+        self.asin = asin
+        self.name = name
+
+class Genre:
+    asin: str
+    name: str
+    def __init__(self, asin, name): 
+        self.asin = asin
+        self.name = name
+
+class Tag:
+    """
+    Tags associated with the book, e.g "Action & Adventure", "Epic"
+    """
+    asin: str
+    name: str
+    def __init__(self, asin, name): 
+        self.asin = asin
+        self.name = name
+
+class Narrator:
+    name: str
+    def __init__(self, name):
+        self.name = name
+
+class Series:
+    asin: str
+    name: str
+    position: int
+    
+    def __init__(self, asin, name, position): 
+        self.asin = asin
+        self.name = name
+        self.position = position
+
+class Book:
+    asin: str
+    authors: List[Author]
+    description: str
+    format_type: str # e.g, "unabridged"
+    genres: List[Genre]
+    image_url: str
+    language: str
+    narrators: List[Narrator]
+    publisher: str
+    release_date: str # yyyy-mm-dd format
+    runtime_length_min: int
+    series: Optional[Series]
+    subtitle: Optional[str]
+    summary_html: str
+    tags: List[Tag]
+    title: str
+
+    def __init__(self, asin, authors, description, format_type, genres, image_url, language, narrators, publisher, release_date, runtime_length_min, series, subtitle, summary_html, tags, title):
+        self.asin = asin
+        self.authors = authors
+        self.description = description
+        self.format_type = format_type
+        self.genres = genres
+        self.image_url = image_url
+        self.language = language
+        self.narrators = narrators
+        self.publisher = publisher
+        self.release_date = release_date
+        self.runtime_length_min = runtime_length_min
+        self.series = series
+        self.subtitle = subtitle
+        self.summary_html = summary_html
+        self.tags = tags
+        self.title = title
+        self.title = title
+
+    def from_audnex_book(b: Dict):
+        """
+        Creates a `Book` from an Audnex book result
+        """
+        series_primary=b["seriesPrimary"]
+        if series_primary:
+            series_position=re.search(r"\d+", series_primary["position"]).group(0)
+            series = Series(asin=series_primary["asin"], name=series_primary["name"], position=int(series_position))
+        else:
+            series = None
+        
+        return Book(
+            asin=b["asin"],
+            authors=[Author(asin=a["asin"], name=a["name"]) for a in b["authors"]],
+            description=b["description"],
+            format_type=b["formatType"],
+            genres=[
+                Genre(asin=g["asin"], name=g["name"]) for g in b["genres"] if g["type"] == "genre"
+            ],
+            image_url=b["image"],
+            language=b["language"],
+            narrators=[Narrator(name=n["name"]) for n in b["narrators"]],
+            publisher=b["publisherName"],
+            release_date=b["releaseDate"][:10], # ignore timestamp from iso8601 string
+            runtime_length_min=b["runtimeLengthMin"],
+            series=series,
+            subtitle=b["subtitle"],
+            summary_html=b["summary"],
+            tags=[
+                Tag(asin=g["asin"], name=g["name"]) for g in b["genres"] if g["type"] == "tag"
+            ],
+            title=b["title"],
+        )
+    
+class Chapter:
+    length_ms: int
+    start_offset_ms: int
+    start_offset_sec: int
+    title: str
+    def __init__(self, length_ms, start_offset_ms, start_offset_sec, title):
+        self.length_ms = length_ms
+        self.start_offset_ms = start_offset_ms
+        self.start_offset_sec = start_offset_sec
+        self.title = title
+
+class BookChapters:
+    asin: str
+    bran_intro_duration_ms: int
+    brand_outro_duration_ms: int
+    chapters: List[Chapter]
+    is_accurate: bool
+    runtime_length_ms: int
+    runtime_length_sec: int
+
+    def __init__(self, asin, bran_intro_duration_ms, brand_outro_duration_ms, chapters, is_accurate, runtime_length_ms, runtime_length_sec):
+        self.asin = asin
+        self.bran_intro_duration_ms = bran_intro_duration_ms
+        self.brand_outro_duration_ms = brand_outro_duration_ms
+        self.chapters = chapters
+        self.is_accurate = is_accurate
+        self.runtime_length_ms = runtime_length_ms
+        self.runtime_length_sec = runtime_length_sec
+    
+    @staticmethod
+    def from_audnex_chapter_info(c: Dict):
+        """
+        Creates a `BookChapters` instance from audnex's /book/{asin}/chapters endpoint
+        """
+        return BookChapters(
+            asin=c["asin"],
+            bran_intro_duration_ms=c["brandIntroDurationMs"],
+            brand_outro_duration_ms=c["brandOutroDurationMs"],
+            chapters=[
+                Chapter(length_ms=c["lengthMs"], start_offset_ms=c["startOffsetMs"], start_offset_sec=c["startOffsetSec"], title=c["title"])
+                for c in c["chapters"]
+            ],
+            is_accurate=c["isAccurate"],
+            runtime_length_ms=c["runtimeLengthMs"],
+            runtime_length_sec=c["runtimeLengthSec"],
+        )
+    
