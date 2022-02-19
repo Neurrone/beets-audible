@@ -84,7 +84,7 @@ class Book:
         """
         Creates a `Book` from an Audnex book result
         """
-        series_primary=b["seriesPrimary"]
+        series_primary=b.get("seriesPrimary")
         if series_primary:
             series_position=re.search(r"\d+", series_primary["position"]).group(0)
             series = Series(asin=series_primary["asin"], name=series_primary["name"], position=int(series_position))
@@ -106,7 +106,7 @@ class Book:
             release_date=b["releaseDate"][:10], # ignore timestamp from iso8601 string
             runtime_length_min=b["runtimeLengthMin"],
             series=series,
-            subtitle=b["subtitle"],
+            subtitle=b.get("subtitle"),
             summary_html=b["summary"],
             tags=[
                 Tag(asin=g["asin"], name=g["name"]) for g in b["genres"] if g["type"] == "tag"
