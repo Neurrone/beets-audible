@@ -16,6 +16,7 @@ class Audible(BeetsPlugin):
             'source_weight': 0.5,
         })
         
+        # see https://github.com/beetbox/mediafile/blob/master/mediafile.py
         album_sort = mediafile.MediaField(
             mediafile.MP3StorageStyle(u'TSOA'),
             mediafile.StorageStyle(u'TSOA')
@@ -75,8 +76,31 @@ class Audible(BeetsPlugin):
             query = album
         else:
             query = f'{artist} {album}'
-        return  self.get_albums(query)
-
+        
+        albums = self.get_albums(query)
+        for a in albums:
+            normalized_book_title = a.album.strip().lower()
+            normalized_album_name = album.strip().lower()
+            # account for different length strings
+            is_likely_match = normalized_album_name in normalized_book_title or normalized_book_title in normalized_album_name
+            is_chapterized = len(a.tracks) == len(items)
+            # matching doesn't work well if the number of files in the album doesn't match the number of chapters
+            # As a workaround, return the same number of tracks as the number of files.
+            # This white lie is a workaround but works extraordinarily well
+            if is_likely_match and is_chapterized:
+                self._log.debug(f"Attempting to match non-chapterized book: {len(items)} files to {len(a.tracks)} chapters.")
+                
+                common_track_attributes = dict(a.tracks[0])
+                del common_track_attributes['index']
+                del common_track_attributes['length']
+                del common_track_attributes['title']
+                
+                a.tracks = [
+                    TrackInfo(**common_track_attributes, title=item.title, length=item.length, index=i+1)
+                    for i, item in enumerate(items)
+                ]
+        return albums
+    
     def album_for_id(self, album_id):
         """
         Fetches book info by its asin and returns an AlbumInfo object
@@ -136,6 +160,11 @@ class Audible(BeetsPlugin):
             album_sort = f"{title} - {subtitle}"
         else:
             album_sort = title
+        
+        if not series:
+            series_name = None
+            series_position = None
+            content_group_description = None
         
         authors = '/'.join([a.name for a in book.authors])
         narrators = '/'.join([n.name for n in book.narrators])
