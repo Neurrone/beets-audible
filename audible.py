@@ -87,14 +87,14 @@ class Audible(BeetsPlugin):
             # matching doesn't work well if the number of files in the album doesn't match the number of chapters
             # As a workaround, return the same number of tracks as the number of files.
             # This white lie is a workaround but works extraordinarily well
-            if is_likely_match and is_chapterized:
+            if is_likely_match and not is_chapterized:
                 self._log.debug(f"Attempting to match non-chapterized book: {len(items)} files to {len(a.tracks)} chapters.")
                 
                 common_track_attributes = dict(a.tracks[0])
                 del common_track_attributes['index']
                 del common_track_attributes['length']
                 del common_track_attributes['title']
-                
+
                 a.tracks = [
                     TrackInfo(**common_track_attributes, title=item.title, length=item.length, index=i+1)
                     for i, item in enumerate(items)
@@ -189,18 +189,22 @@ class Audible(BeetsPlugin):
         ]
 
         # release_date is in in yyyy-mm-dd format
-        year = release_date[:4]
-        month = release_date[5:7]
-        day = release_date[8:10]
+        year = int(release_date[:4])
+        month = int(release_date[5:7])
+        day = int(release_date[8:10])
         mediums = []
         data_url = f"https://api.audnex.us/books/{asin}"
 
         return AlbumInfo(
-            tracks=tracks, album=album, album_id=None,
+            tracks=tracks, album=album, album_id=None, albumtype="audiobook",
             artist=authors, year=year, month=month, day=day,
+            original_year=year, original_month=month, original_day=day,
             summary_html=book.summary_html,
-            language=book.language, **common_attributes
+            language=book.language, label=book.publisher, **common_attributes
         )
 
     def on_write(self, item, path, tags):
         tags["itunes_media_type"] = "Audiobook"
+        # Strip unwanted tags that Beets automatically adds
+        tags['mb_trackid'] = None
+        tags['lyrics'] = None
