@@ -1,10 +1,10 @@
 from beets.autotag.hooks import AlbumInfo, TrackInfo
 from beets.plugins import BeetsPlugin, get_distance
 import mediafile
+import os
 import re
 
 from .api import get_book_info, search_audible
-from .strip_html import strip_html
 
 class Audible(BeetsPlugin):
     data_source = 'Audible'
@@ -12,6 +12,7 @@ class Audible(BeetsPlugin):
     def __init__(self):
         super().__init__()
         self.register_listener('write', self.on_write)
+        self.register_listener('import_task_files', self.on_import_task_files)
         self.config.add({
             'source_weight': 0.5,
         })
@@ -169,7 +170,7 @@ class Audible(BeetsPlugin):
         authors = '/'.join([a.name for a in book.authors])
         narrators = '/'.join([n.name for n in book.narrators])
         authors_and_narrators = ', '.join([authors, narrators])
-        description = strip_html(book.summary_html).replace(u'\xa0', u' ')
+        description = book.summary_markdown
         genres = '/'.join([g.name for g in book.genres])
 
         common_attributes = {
@@ -208,3 +209,24 @@ class Audible(BeetsPlugin):
         # Strip unwanted tags that Beets automatically adds
         tags['mb_trackid'] = None
         tags['lyrics'] = None
+
+    def on_import_task_files(self, task, session):
+        self.write_additional_book_data(task.imported_items())
+    
+    def write_additional_book_data(self, items):
+        """Write description.txt, reader.txt and cover art
+        """
+        if len(items) == 0:
+            return
+        
+        item = items[0]
+        destination = os.path.dirname(item.path)
+        
+        description = item.comments
+        with open(os.path.join(destination, b'desc.txt'), 'w') as f:
+            f.write(description)
+        
+        narrator = item.composer
+        with open(os.path.join(destination, b'reader.txt'), 'w') as f:
+            f.write(narrator)
+        

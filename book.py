@@ -1,5 +1,6 @@
 import re
 from typing import Dict, List, Optional
+from markdownify import markdownify as md
 
 # This would be much less verbose with dataclasses, only available in Python 3.7+
 # Beets has a minimum Python version requirement of 3.6, hence I'm not using dataclasses here
@@ -58,10 +59,11 @@ class Book:
     series: Optional[Series]
     subtitle: Optional[str]
     summary_html: str
+    summary_markdown: str
     tags: List[Tag]
     title: str
 
-    def __init__(self, asin, authors, description, format_type, genres, image_url, language, narrators, publisher, release_date, runtime_length_min, series, subtitle, summary_html, tags, title):
+    def __init__(self, asin, authors, description, format_type, genres, image_url, language, narrators, publisher, release_date, runtime_length_min, series, subtitle, summary_html, summary_markdown, tags, title):
         self.asin = asin
         self.authors = authors
         self.description = description
@@ -76,6 +78,7 @@ class Book:
         self.series = series
         self.subtitle = subtitle
         self.summary_html = summary_html
+        self.summary_markdown = summary_markdown
         self.tags = tags
         self.title = title
         self.title = title
@@ -90,7 +93,12 @@ class Book:
             series = Series(asin=series_primary["asin"], name=series_primary["name"], position=int(series_position))
         else:
             series = None
-        
+        summary_html = b["summary"]
+        summary_markdown = md(summary_html)
+        # Remove blank lines from the start and end, as well as whitespace from each line
+        normalized_summary_markdown = '\n'.join([
+            line.strip() for line in summary_markdown.strip().splitlines()
+        ])
         return Book(
             asin=b["asin"],
             authors=[Author(asin=a["asin"], name=a["name"]) for a in b["authors"]],
@@ -107,7 +115,8 @@ class Book:
             runtime_length_min=b["runtimeLengthMin"],
             series=series,
             subtitle=b.get("subtitle"),
-            summary_html=b["summary"],
+            summary_html=summary_html,
+            summary_markdown=normalized_summary_markdown,
             tags=[
                 Tag(asin=g["asin"], name=g["name"]) for g in b["genres"] if g["type"] == "tag"
             ],
