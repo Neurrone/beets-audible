@@ -1,4 +1,5 @@
 import os
+import pathlib
 import re
 from tempfile import NamedTemporaryFile
 
@@ -82,14 +83,16 @@ class Audible(BeetsPlugin):
         matching an album and artist (if not various).
         """
         if not album and not artist:
-            self._log.debug('Skipping Audible query. Files missing album and '
-                            'artist tags.')
-            return []
-
-        if va_likely:
-            query = album
+            folder_name = pathlib.PurePath(str(items[0].path)).parent.name
+            self._log.warn(f"Files missing album and artist tags. Attempting query based on folder name {folder_name}")
+            query = folder_name
         else:
-            query = f'{artist} {album}'
+            if va_likely:
+                query = album
+            else:
+                query = f'{artist} {album}'
+        
+        self._log.debug(f"Searching Audible for {query}")
         albums = self.get_albums(query)
         for a in albums:
             is_chapter_data_accurate = a.is_chapter_data_accurate
