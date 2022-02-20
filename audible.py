@@ -17,7 +17,7 @@ class Audible(BeetsPlugin):
 
         self.config.add({
             'fetch_art': True,
-            'source_weight': 0.5,
+            'source_weight': 0.0,
         })
         # Mapping of asin to cover art urls
         self.cover_art_urls = {}
@@ -93,6 +93,7 @@ class Audible(BeetsPlugin):
         
         albums = self.get_albums(query)
         for a in albums:
+            is_chapter_data_accurate = a.is_chapter_data_accurate
             normalized_book_title = a.album.strip().lower()
             normalized_album_name = album.strip().lower()
             # account for different length strings
@@ -101,8 +102,13 @@ class Audible(BeetsPlugin):
             # matching doesn't work well if the number of files in the album doesn't match the number of chapters
             # As a workaround, return the same number of tracks as the number of files.
             # This white lie is a workaround but works extraordinarily well
+            if is_likely_match and is_chapterized and not is_chapter_data_accurate:
+                # Logging this for now because this situation 
+                # is technically possible (based on the API) but unsure how often it happens
+                self._log.warn(f"Chapter data for {a.album} could be inaccurate.")
+            
             if is_likely_match and not is_chapterized:
-                self._log.debug(f"Attempting to match non-chapterized book: {len(items)} files to {len(a.tracks)} chapters.")
+                self._log.debug(f"Attempting to match non-chapterized book: album {album} with {len(items)} files to book {a.album} with {len(a.tracks)} chapters.")
                 
                 common_track_attributes = dict(a.tracks[0])
                 del common_track_attributes['index']
@@ -208,6 +214,7 @@ class Audible(BeetsPlugin):
             )
             for i, c in enumerate(chapters.chapters)
         ]
+        is_chapter_data_accurate = chapters.is_accurate
 
         # release_date is in in yyyy-mm-dd format
         year = int(release_date[:4])
@@ -222,6 +229,7 @@ class Audible(BeetsPlugin):
             artist=authors, year=year, month=month, day=day,
             original_year=year, original_month=month, original_day=day,
             cover_url=cover_url, summary_html=book.summary_html,
+            is_chapter_data_accurate=is_chapter_data_accurate,
             language=book.language, label=book.publisher, **common_attributes
         )
     
