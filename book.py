@@ -83,6 +83,7 @@ class Book:
         self.title = title
         self.title = title
 
+    @staticmethod
     def from_audnex_book(b: Dict):
         """
         Creates a `Book` from an Audnex book result

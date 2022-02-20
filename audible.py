@@ -143,16 +143,22 @@ class Audible(BeetsPlugin):
 
         try:
             results = search_audible(query)
+        except Exception as e:
+            self._log.warn("Could not connect to Audible API while searching for {0!r}",
+                            query, exc_info=True)
+            return []
+        
+        try:
             products = results["products"]
             if len(products) > 0:
                 return [self.get_album_info(p["asin"]) for p in products]
             else:
                 return []
         except Exception as e:
-            self._log.warn("Could not connect to Audible API while searching for {0!r}",
-                            query, exc_info=True)
+            self._log.warn("Error while fetching book information from Audnex",
+                            exc_info=True)
             return []
-    
+        
     def get_album_info(self, asin):
         """Returns an AlbumInfo object for a book given its asin.
         """
