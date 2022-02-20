@@ -51,7 +51,7 @@ class Audible(BeetsPlugin):
         self.add_media_field('series_name', series_name)
         series_position = mediafile.MediaField(
             mediafile.MP3StorageStyle(u'MVIN'),
-            mediafile.MP3DescStorageStyle(u'SERIESPART'),
+            mediafile.MP3DescStorageStyle(u'SERIESPOSITION'),
             mediafile.StorageStyle(u'MVIN')
         )
         self.add_media_field('series_position', series_position)
