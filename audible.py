@@ -94,8 +94,9 @@ class Audible(BeetsPlugin):
         albums = self.get_albums(query)
         for a in albums:
             is_chapter_data_accurate = a.is_chapter_data_accurate
-            normalized_book_title = a.album.strip().lower()
-            normalized_album_name = album.strip().lower()
+            punctuation = r'[^\w\s\d]'
+            normalized_book_title = re.sub(punctuation, '', a.album.strip().lower())
+            normalized_album_name = re.sub(punctuation, '', album.strip().lower())
             # account for different length strings
             is_likely_match = normalized_album_name in normalized_book_title or normalized_book_title in normalized_album_name
             is_chapterized = len(a.tracks) == len(items)
