@@ -20,7 +20,9 @@ This Beets plugin solves both problems.
 
    ```yaml
    # add audible to the list of plugins
-   plugins: edit scrub audible
+   plugins: edit fromfilename scrub audible
+
+   directory: /audiobooks
 
    # Place books in their own folders to be compatible with Booksonic and Audiobookshelf servers
    paths:
@@ -81,10 +83,10 @@ This Beets plugin solves both problems.
          - TZ=Asia/Singapore
        volumes:
          - ./config:/config
-         - ./scripts:/config/custom-cont-init.d
-         - /path/to/audiobooks:/music
-         - /path/where/books/are/imported/from:/downloads
          - ./plugins:/plugins
+         - ./scripts:/config/custom-cont-init.d
+         - /path/to/audiobooks:/audiobooks
+         - /path/to/import/books/from:/input
        restart: unless-stopped
    ```
 
@@ -104,3 +106,15 @@ This Beets plugin solves both problems.
 ## Usage
 
 When importing audiobooks into Beets, ensure that the files for each book are in its own folder. This is so that the files for a book are treated as an album by Beets. Avoid putting files from multiple books in the same folder.
+
+The following sources of information are used to search for book matches in order of preference:
+
+1. Album and artist tags
+2. If tags are missing from the file, enabling the fromfilename plugin will attempt to deduce album and artist from file names
+3. If all else fails, use the folder name as the query string
+
+If you're not getting a match for a book, chances are that it is bad data in tags. Correct the artist and album tags before trying again.
+
+## Plex Integration
+
+If the directory where Beets imports audiobooks to is also where you've set Plex to serve content from, you can enable the [plexupdate plugin](https://beets.readthedocs.io/en/stable/plugins/plexupdate.html) to notify Plex when new books are imported.
