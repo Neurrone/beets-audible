@@ -33,17 +33,21 @@ This Beets plugin solves both problems.
      comp: Compilations/$album%aunique{}/$track - $title
      albumtype_soundtrack: Soundtracks/$album/$track $title
 
-   musicbrainz: # disables musicbrainz lookup, as it doesn't help for audiobooks # This is a workaround, as there is currently no built-in way of doing so # see https://github.com/beetbox/beets/issues/400
+   # disables musicbrainz lookup, as it doesn't help for audiobooks
+   # This is a workaround, as there is currently no built-in way of doing so
+   # see https://github.com/beetbox/beets/issues/400
+   musicbrainz:
      host: localhost:5123
 
-   pluginpath: - /plugins/audible # point this to the directory which contains audible.py
+   pluginpath:
+     - /plugins/audible # point this to the directory which contains audible.py
 
-   audible: # disable the source_weight penalty
-     source_weight: 0.0
+   audible:
+     source_weight: 0.0 # disable the source_weight penalty
      fetch_art: true # whether to retrieve cover art
 
    scrub:
-     auto: yes
+     auto: yes # optional, enabling this is personal preference
    ```
 
 4. Run the `beet --version` command and verify that the audible plugin appears in the list of plugins.
@@ -67,21 +71,21 @@ This Beets plugin solves both problems.
    ---
    version: "3"
    services:
-   beets:
-     image: lscr.io/linuxserver/beets:latest
-     container_name: beets
-     environment:
-       # Update as needed
-       - PUID=1000
-       - PGID=1000
-       - TZ=Asia/Singapore
-     volumes:
-       - ./config:/config
-       - ./scripts:/config/custom-cont-init.d
-       - /path/to/audiobooks:/music
-       - /path/where/books/are/imported/from:/downloads
-       - ./plugins:/plugins
-     restart: unless-stopped
+     beets:
+       image: lscr.io/linuxserver/beets:latest
+       container_name: beets
+       environment:
+         # Update as needed
+         - PUID=1000
+         - PGID=1000
+         - TZ=Asia/Singapore
+       volumes:
+         - ./config:/config
+         - ./scripts:/config/custom-cont-init.d
+         - /path/to/audiobooks:/music
+         - /path/where/books/are/imported/from:/downloads
+         - ./plugins:/plugins
+       restart: unless-stopped
    ```
 
 3. Save the following under `scripts/install-markdownify.sh`:
