@@ -1,21 +1,34 @@
-from beets.autotag.hooks import AlbumInfo, TrackInfo
-from beets.plugins import BeetsPlugin, get_distance
-import mediafile
 import os
 import re
+from tempfile import NamedTemporaryFile
 
-from .api import get_book_info, search_audible
+from beets import importer, util
+from beets.autotag.hooks import AlbumInfo, TrackInfo
+from beets.dbcore import types
+from beets.plugins import BeetsPlugin, get_distance
+import mediafile
+
+from .api import get_book_info, make_request, search_audible
 
 class Audible(BeetsPlugin):
     data_source = 'Audible'
-    
     def __init__(self):
         super().__init__()
-        self.register_listener('write', self.on_write)
-        self.register_listener('import_task_files', self.on_import_task_files)
+
         self.config.add({
+            'fetch_art': True,
             'source_weight': 0.5,
         })
+        # Mapping of asin to cover art urls
+        self.cover_art_urls = {}
+        # stores paths of downloaded cover art to be used during import
+        self.cover_art = {}
+        
+        self.register_listener('write', self.on_write)
+        self.register_listener('import_task_files', self.on_import_task_files)
+        
+        if self.config['fetch_art']:
+            self.import_stages = [self.fetch_art]
         
         # see https://github.com/beetbox/mediafile/blob/master/mediafile.py
         album_sort = mediafile.MediaField(
@@ -171,6 +184,7 @@ class Audible(BeetsPlugin):
         narrators = '/'.join([n.name for n in book.narrators])
         authors_and_narrators = ', '.join([authors, narrators])
         description = book.summary_markdown
+        cover_url = book.image_url
         genres = '/'.join([g.name for g in book.genres])
 
         common_attributes = {
@@ -196,24 +210,63 @@ class Audible(BeetsPlugin):
         mediums = []
         data_url = f"https://api.audnex.us/books/{asin}"
 
+        self.cover_art_urls[asin] = cover_url
         return AlbumInfo(
             tracks=tracks, album=album, album_id=None, albumtype="audiobook",
             artist=authors, year=year, month=month, day=day,
             original_year=year, original_month=month, original_day=day,
-            summary_html=book.summary_html,
+            cover_url=cover_url, summary_html=book.summary_html,
             language=book.language, label=book.publisher, **common_attributes
         )
-
+    
     def on_write(self, item, path, tags):
         tags["itunes_media_type"] = "Audiobook"
         # Strip unwanted tags that Beets automatically adds
         tags['mb_trackid'] = None
         tags['lyrics'] = None
 
-    def on_import_task_files(self, task, session):
-        self.write_additional_book_data(task.imported_items())
+    def fetch_art(self, session, task):
+        # Only fetch art for albums
+        if task.is_album:  
+            if task.album.artpath and os.path.isfile(task.album.artpath):
+                # Album already has art (probably a re-import); skip it.
+                return
+            
+            if not task.choice_flag in (importer.action.APPLY,
+                                      importer.action.RETAG):
+                return
+
+            cover_url = self.cover_art_urls.get(task.album.asin)
+            author = task.album.albumartist
+            title = task.album.album
+            if not cover_url:
+                self._log.warn(f"No cover art found for {title} by {author}.")
+            
+            try:
+                cover_path = self.fetch_image(cover_url)
+                self.cover_art[task] = cover_path
+            except Exception as e:
+                self._log.warn(f"Error while downloading cover art for {title} by {author} from {cover_url}: {e}")
     
-    def write_additional_book_data(self, items):
+    def fetch_image(self, url):
+        """Downloads an image from a URL and returns a path to the downloaded image.
+        """
+        image = make_request(url)
+        ext = url[-4:] # e.g, ".jpg"
+        with NamedTemporaryFile(suffix=ext, delete=False) as fh:
+            fh.write(image)
+        self._log.debug('downloaded art to: {0}',
+                        util.displayable_path(fh.name))
+        return util.bytestring_path(fh.name)
+
+    def on_import_task_files(self, task, session):
+        self.write_book_description_and_narrator(task.imported_items())
+        if self.config['fetch_art'] and task in self.cover_art:
+            cover_path = self.cover_art.pop(task)
+            task.album.set_art(cover_path, True)
+            task.album.store()
+    
+    def write_book_description_and_narrator(self, items):
         """Write description.txt, reader.txt and cover art
         """
         if len(items) == 0:
