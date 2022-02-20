@@ -90,7 +90,6 @@ class Audible(BeetsPlugin):
             query = album
         else:
             query = f'{artist} {album}'
-        
         albums = self.get_albums(query)
         for a in albums:
             is_chapter_data_accurate = a.is_chapter_data_accurate
@@ -181,8 +180,12 @@ class Audible(BeetsPlugin):
         if series:
             series_name = series.name
             series_position = series.position
-            album_sort = f"{series_name} {series_position} - {title}"
-            content_group_description = f"{series_name}, book #{series_position}"
+            if series_position:
+                album_sort = f"{series_name} {series_position} - {title}"
+                content_group_description = f"{series_name}, book #{series_position}"
+            else:
+                album_sort = f"{series_name} - {title}"
+                content_group_description = None
         elif subtitle:
             album_sort = f"{title} - {subtitle}"
         else:

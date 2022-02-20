@@ -6,7 +6,7 @@ from markdownify import markdownify as md
 # Beets has a minimum Python version requirement of 3.6, hence I'm not using dataclasses here
 
 class Author:
-    asin: str
+    asin: Optional[str]
     name: str
     def __init__(self, asin, name): 
         self.asin = asin
@@ -37,7 +37,7 @@ class Narrator:
 class Series:
     asin: str
     name: str
-    position: int
+    position: Optional[int] # Yes, sadly its possible for series to not have a position
     
     def __init__(self, asin, name, position): 
         self.asin = asin
@@ -90,8 +90,12 @@ class Book:
         """
         series_primary=b.get("seriesPrimary")
         if series_primary:
-            series_position=re.search(r"\d+", series_primary["position"]).group(0)
-            series = Series(asin=series_primary["asin"], name=series_primary["name"], position=int(series_position))
+            pos = series_primary.get("position")
+            if pos:
+                series_position = int(re.search(r"\d+", pos).group(0))
+            else:
+                series_position = None
+            series = Series(asin=series_primary["asin"], name=series_primary["name"], position=series_position)
         else:
             series = None
         summary_html = b["summary"]
@@ -102,7 +106,7 @@ class Book:
         ])
         return Book(
             asin=b["asin"],
-            authors=[Author(asin=a["asin"], name=a["name"]) for a in b["authors"]],
+            authors=[Author(asin=a.get("asin"), name=a["name"]) for a in b["authors"]],
             description=b["description"],
             format_type=b["formatType"],
             genres=[
