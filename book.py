@@ -37,7 +37,8 @@ class Narrator:
 class Series:
     asin: str
     name: str
-    position: Optional[int] # Yes, sadly its possible for series to not have a position
+    # Yes, sadly its possible for series to not have a position
+    position: Optional[str] # e.g, "2", "8.5"
     
     def __init__(self, asin, name, position): 
         self.asin = asin
@@ -92,7 +93,8 @@ class Book:
         if series_primary:
             pos = series_primary.get("position")
             if pos:
-                series_position = int(re.search(r"\d+", pos).group(0))
+                match = re.search(r"[\d\.]+", pos)
+                series_position = match.group(0) if match else None
             else:
                 series_position = None
             series = Series(asin=series_primary["asin"], name=series_primary["name"], position=series_position)
