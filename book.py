@@ -38,7 +38,7 @@ class Series:
     asin: str
     name: str
     # Yes, sadly its possible for series to not have a position
-    position: Optional[str] # e.g, "2", "8.5"
+    position: Optional[str] # e.g, "2", "8.5", "1-5"
     
     def __init__(self, asin, name, position): 
         self.asin = asin
@@ -93,7 +93,7 @@ class Book:
         if series_primary:
             pos = series_primary.get("position")
             if pos:
-                match = re.search(r"[\d\.]+", pos)
+                match = re.search(r"[\d\.\-]+", pos)
                 series_position = match.group(0) if match else None
             else:
                 series_position = None
