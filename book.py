@@ -49,7 +49,7 @@ class Book:
     authors: List[Author]
     description: str
     format_type: str # e.g, "unabridged"
-    genres: List[Genre]
+    genres: List[Genre] # may be an empty list
     image_url: str
     language: str
     narrators: List[Narrator]
@@ -60,7 +60,7 @@ class Book:
     subtitle: Optional[str]
     summary_html: str
     summary_markdown: str
-    tags: List[Tag]
+    tags: List[Tag] # may be an empty list
     title: str
 
     def __init__(self, asin, authors, description, format_type, genres, image_url, language, narrators, publisher, release_date, runtime_length_min, series, subtitle, summary_html, summary_markdown, tags, title):
@@ -110,7 +110,8 @@ class Book:
             description=b["description"],
             format_type=b["formatType"],
             genres=[
-                Genre(asin=g["asin"], name=g["name"]) for g in b["genres"] if g["type"] == "genre"
+                # API response may not contain genre info
+                Genre(asin=g["asin"], name=g["name"]) for g in b.get("genres", []) if g["type"] == "genre"
             ],
             image_url=b["image"],
             language=b["language"],
@@ -123,7 +124,8 @@ class Book:
             summary_html=summary_html,
             summary_markdown=normalized_summary_markdown,
             tags=[
-                Tag(asin=g["asin"], name=g["name"]) for g in b["genres"] if g["type"] == "tag"
+                # API response may not contain tag info
+                Tag(asin=g["asin"], name=g["name"]) for g in b.get("genres", []) if g["type"] == "tag"
             ],
             title=b["title"],
         )
