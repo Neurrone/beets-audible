@@ -101,6 +101,7 @@ class Audible(BeetsPlugin):
             punctuation = r'[^\w\s\d]'
             normalized_book_title = re.sub(punctuation, '', a.album.strip().lower())
             normalized_album_name = re.sub(punctuation, '', album.strip().lower())
+            self._log.debug(f"Matching album name {normalized_album_name} with book title {normalized_book_title}")
             # account for different length strings
             is_likely_match = normalized_album_name in normalized_book_title or normalized_book_title in normalized_album_name
             is_chapterized = len(a.tracks) == len(items)
@@ -148,11 +149,6 @@ class Audible(BeetsPlugin):
     def get_albums(self, query):
         """Returns a list of AlbumInfo objects for an Audible search query.
         """
-        # Strip non-word characters from query. Things like "!" and "-" can
-        # cause a query to return no results, even if they match the artist or
-        # album title. Use `re.UNICODE` flag to avoid stripping non-english
-        # word characters.
-        query = re.sub(r'(?u)\W+', ' ', query)
         # Strip medium information from query, Things like "CD1" and "disk 1"
         # can also negate an otherwise positive result.
         query = re.sub(r'(?i)\b(CD|disc)\s*\d+', '', query)

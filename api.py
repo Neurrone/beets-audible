@@ -11,7 +11,7 @@ USER_AGENT = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_3) AppleWebKit/537.36 
 
 def search_audible(keywords: str) -> Dict:
     params = {
-        "response_groups": "product_attrs",
+        "response_groups": "contributors,product_attrs,product_desc,product_extended_attrs,series",
         "num_results": 10,
         "products_sort_by": "Relevance",
         "keywords": keywords
