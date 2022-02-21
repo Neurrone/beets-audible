@@ -1,3 +1,4 @@
+import datetime
 import os
 import pathlib
 import re
@@ -159,10 +160,15 @@ class Audible(BeetsPlugin):
         
         try:
             products = results["products"]
-            if len(products) > 0:
-                return [self.get_album_info(p["asin"]) for p in products]
-            else:
-                return []
+            today = datetime.datetime.now().strftime("%Y-%m-%d")
+            products_without_unreleased_entries = [
+                p for p in products if p["release_date"] <= today
+            ]
+            if len(products_without_unreleased_entries) < len(products):
+                # see https://github.com/laxamentumtech/audnexus/issues/239
+                self._log.info(f"Excluded {len(products) - len(products_without_unreleased_entries)} books which have not been released from consideration.")
+            
+            return [self.get_album_info(p["asin"]) for p in products_without_unreleased_entries]
         except Exception as e:
             self._log.warn("Error while fetching book information from Audnex",
                             exc_info=True)
