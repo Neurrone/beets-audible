@@ -15,7 +15,7 @@ This Beets plugin solves both problems.
 ## Installation
 
 1. Clone this repository.
-2. Install markdownify from pip: `pip install markdownify`. See the next section instead if you're running Beets in Docker (highly recommended as it makes it easier to maintain a separate Beets installation dedicated to audiobooks).
+2. Install dependencies via pip: `pip install markdownify natsort`. See the next section instead if you're running Beets in Docker (highly recommended as it makes it easier to maintain a separate Beets installation dedicated to audiobooks).
 3. Use a separate beets config and database for managing audiobooks. This is the recommended Beets config for this plugin:
 
    ```yaml
@@ -63,7 +63,7 @@ This Beets plugin solves both problems.
      config/
      plugins/
      scripts/
-       install-markdownify.sh # see step 3
+       install-deps.sh # see step 3
      docker-compose.yml # see step 2
    ```
 
@@ -90,12 +90,12 @@ This Beets plugin solves both problems.
        restart: unless-stopped
    ```
 
-3. Save the following under `scripts/install-markdownify.sh`:
+3. Save the following under `scripts/install-deps.sh`:
 
    ```sh
    #!/bin/bash
-   echo "Installing markdownify"
-   pip install markdownify
+   echo "Installing dependencies..."
+   pip install markdownify natsort
    ```
 
 4. Clone this repository into the `plugins` folder.

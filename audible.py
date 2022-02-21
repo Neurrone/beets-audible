@@ -9,6 +9,7 @@ from beets.autotag.hooks import AlbumInfo, TrackInfo
 from beets.dbcore import types
 from beets.plugins import BeetsPlugin, get_distance
 import mediafile
+from natsort import natsorted
 
 from .api import get_book_info, make_request, search_audible
 
@@ -119,10 +120,22 @@ class Audible(BeetsPlugin):
                 del common_track_attributes['length']
                 del common_track_attributes['title']
 
-                a.tracks = [
-                    TrackInfo(**common_track_attributes, title=item.title, length=item.length, index=i+1)
-                    for i, item in enumerate(items)
-                ]
+                items_with_missing_track_numbers = [i for i in items if not i.track]
+                if len(items_with_missing_track_numbers) > 0:
+                    # Use natural sorting instead of lexigraphical to avoid this order:
+                    # chapter 1, 10, 12, ..., 19, 2, etc
+                    naturally_sorted_items = natsorted(items, key=lambda i: str(i.path))
+                    a.tracks = [
+                        TrackInfo(**common_track_attributes, title=item.title, length=item.length, index=i+1)
+                        for i, item in enumerate(naturally_sorted_items)
+                    ]
+                else:
+                    # Assume that the track information is good
+                    a.tracks = [
+                        TrackInfo(**common_track_attributes, title=item.title, length=item.length, index=item.track)
+                        for item in items
+                    ]
+                
         return albums
     
     def album_for_id(self, album_id):
