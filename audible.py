@@ -207,8 +207,8 @@ class Audible(BeetsPlugin):
             series_position = None
             content_group_description = None
         
-        authors = ','.join([a.name for a in book.authors])
-        narrators = ','.join([n.name for n in book.narrators])
+        authors = ', '.join([a.name for a in book.authors])
+        narrators = ', '.join([n.name for n in book.narrators])
         authors_and_narrators = ', '.join([authors, narrators])
         description = book.summary_markdown
         cover_url = book.image_url
