@@ -99,8 +99,12 @@ class Audible(BeetsPlugin):
         for a in albums:
             is_chapter_data_accurate = a.is_chapter_data_accurate
             punctuation = r'[^\w\s\d]'
+            # normalize by removing punctuation, converting to lowercase,
+            # as well as changing multiple consecutive spaces in the string to a single space
             normalized_book_title = re.sub(punctuation, '', a.album.strip().lower())
+            normalized_book_title = " ".join(normalized_book_title.split())
             normalized_album_name = re.sub(punctuation, '', album.strip().lower())
+            normalized_album_name = " ".join(normalized_album_name.split())
             self._log.debug(f"Matching album name {normalized_album_name} with book title {normalized_book_title}")
             # account for different length strings
             is_likely_match = normalized_album_name in normalized_book_title or normalized_book_title in normalized_album_name
