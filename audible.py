@@ -92,7 +92,7 @@ class Audible(BeetsPlugin):
             if va_likely:
                 query = album
             else:
-                query = f'{artist} {album}'
+                query = f'{album} {artist}'
         
         self._log.debug(f"Searching Audible for {query}")
         albums = self.get_albums(query)
