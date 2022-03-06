@@ -94,6 +94,13 @@ class Audible(BeetsPlugin):
             else:
                 query = f'{album} {artist}'
         
+        # Strip medium information from query, Things like "CD1" and "disk 1"
+        # can also negate an otherwise positive result.
+        query = re.sub(r'(?i)\b(CD|disc)\s*\d+', '', query)
+        # Strip "(unabridged)" or "(abridged)"
+        abridged_indicator = r'(?i)\((unabridged|abridged)\)'
+        query = re.sub(abridged_indicator, '', query)
+        
         self._log.debug(f"Searching Audible for {query}")
         albums = self.get_albums(query)
         for a in albums:
@@ -103,7 +110,9 @@ class Audible(BeetsPlugin):
             # as well as changing multiple consecutive spaces in the string to a single space
             normalized_book_title = re.sub(punctuation, '', a.album.strip().lower())
             normalized_book_title = " ".join(normalized_book_title.split())
-            normalized_album_name = re.sub(punctuation, '', album.strip().lower())
+            normalized_album_name = re.sub(abridged_indicator, '', album.strip().lower())
+            normalized_album_name = re.sub(punctuation, '', normalized_album_name)
+            
             normalized_album_name = " ".join(normalized_album_name.split())
             self._log.debug(f"Matching album name {normalized_album_name} with book title {normalized_book_title}")
             # account for different length strings
@@ -153,10 +162,6 @@ class Audible(BeetsPlugin):
     def get_albums(self, query):
         """Returns a list of AlbumInfo objects for an Audible search query.
         """
-        # Strip medium information from query, Things like "CD1" and "disk 1"
-        # can also negate an otherwise positive result.
-        query = re.sub(r'(?i)\b(CD|disc)\s*\d+', '', query)
-
         try:
             results = search_audible(query)
         except Exception as e:
