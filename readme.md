@@ -167,7 +167,6 @@ The plugin writes the following tags:
 | `TPUB` (PUBLISHER)               | Publisher                                                                                                                           |
 | `ASIN` (ASIN)                    | Amazon Standard Identification Number                                                                                               |
 | `ITUNESMEDIATYPE`                | "Audiobook"                                                                                                                         |
-| `pgap` (ITUNESGAPLESS)           | M4B Gapless album = 1                                                                                                               |
 | `MVNM` (MOVEMENTNAME)            | Series                                                                                                                              |
 | `MVIN` (MOVEMENT)                | Series Book #                                                                                                                       |
 | `TXXX_SERIES` (SERIES)\*\*       | Series                                                                                                                              |
