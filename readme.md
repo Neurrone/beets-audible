@@ -169,7 +169,7 @@ The plugin writes the following tags:
 | `ITUNESMEDIATYPE`                | "Audiobook"                                                                                                                         |
 | `MVNM` (MOVEMENTNAME)            | Series                                                                                                                              |
 | `MVIN` (MOVEMENT)                | Series Book #                                                                                                                       |
-| `TXXX_SERIES` (SERIES)\*\*       | Series                                                                                                                              |
+| `TXXX_SERIES` (SERIES)           | Series                                                                                                                              |
 | `TXXX_SERIESPART`                | Series position                                                                                                                     |
 
 ## Known Limitations
