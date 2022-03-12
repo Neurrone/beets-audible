@@ -27,9 +27,10 @@ This Beets plugin solves both problems.
    # Place books in their own folders to be compatible with Booksonic and Audiobookshelf servers
    paths:
      # For books that belong to a series
-     "albumtype:audiobook series_name::.+": $albumartist/%ifdef{series_name}/$year - $album%aunique{} [%ifdef{series_name} %ifdef{series_position}]/$track - $title
+     "albumtype:audiobook series_name::.+ series_position::.+": $albumartist/%ifdef{series_name}/%ifdef{series_position} - $album%aunique{}/$track - $title
+     "albumtype:audiobook series_name::.+": $albumartist/%ifdef{series_name}/$album%aunique{}/$track - $title
      # Stand-alone books
-     "albumtype:audiobook": $albumartist/$year - $album%aunique{}/$track - $title
+     "albumtype:audiobook": $albumartist/$album%aunique{}/$track - $title
      default: $albumartist/$album%aunique{}/$track - $title
      singleton: Non-Album/$artist - $title
      comp: Compilations/$album%aunique{}/$track - $title
@@ -105,7 +106,13 @@ This Beets plugin solves both problems.
 
 ## Usage
 
-When importing audiobooks into Beets, ensure that the files for each book are in its own folder. This is so that the files for a book are treated as an album by Beets. Avoid putting files from multiple books in the same folder.
+When importing audiobooks into Beets, ensure that the files for each book are in its own folder, even if the audiobook only consists of a single file. This is so that the files for a book are treated as an album by Beets. Avoid putting files from multiple books in the same folder.
+
+When ready, start the import with the following command:
+
+```sh
+beet import /path/to/audiobooks
+```
 
 The following sources of information are used to search for book matches in order of preference:
 
@@ -113,7 +120,64 @@ The following sources of information are used to search for book matches in orde
 2. If tags are missing from the file, enabling the fromfilename plugin will attempt to deduce album and artist from file names
 3. If all else fails, use the folder name as the query string
 
-If you're not getting a match for a book, chances are that it is bad data in tags. Correct the artist and album tags before trying again.
+If you're not getting a match for a book, try the following:
+
+1. Check the tags on the files being imported. The album and artist tags should be set to the book title and author respectively.
+2. Press `E` when Beets prompts you about not being able to find a match. This prompts you to enter the artist and album name. If the wrong book is being matched because there are other books with similar names by the same author, try using the audiobook's asin as the artist and title as the album.
+
+## Folder Structure
+
+The config above places books according to this folder structure, which can be changed by editing the path config.
+
+```
+Terry Goodkind/
+  Sword of Truth/
+    1 - Wizards First Rule/
+      cover.png
+      desc.txt
+      reader.txt
+      wizards first rule.m4b
+George Orwell/
+  Animal Farm/
+    Animal Farm.m4b
+    cover.png
+    desc.txt
+    reader.txt
+```
+
+Desc.txt and reader.txt contain the book description and narrator populated from Audible.
+
+## Tags Written
+
+The plugin writes the following tags:
+
+| ID3 Tag                          | Audible.com Value                                                                                                                   |
+| -------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| `TIT1` (CONTENTGROUP)            | Series, Book #                                                                                                                      |
+| `TALB` (ALBUM)                   | Title                                                                                                                               |
+| `TIT3` (SUBTITLE)                | Subtitle                                                                                                                            |
+| `TPE1` (ARTIST)                  | Author, Narrator                                                                                                                    |
+| `TPE2` (ALBUMARTIST)             | Author                                                                                                                              |
+| `TCOM` (COMPOSER)                | Narrator                                                                                                                            |
+| `TCON` (GENRE)                   | Genre1/Genre2                                                                                                                       |
+| `TDRC` and `TDRL` (release date) | audio publication date                                                                                                              |
+| `COMM` (COMMENT)                 | Publisher's Summary (MP3)                                                                                                           |
+| `desc` (DESCRIPTION)             | Publisher's Summary (M4B)                                                                                                           |
+| `TSOA` (ALBUMSORT)               | If ALBUM only, then %Title%<br>If ALBUM and SUBTITLE, then %Title% - %Subtitle%<br>If Series, then %Series% %Series-part% - %Title% |
+| `TPUB` (PUBLISHER)               | Publisher                                                                                                                           |
+| `ASIN` (ASIN)                    | Amazon Standard Identification Number                                                                                               |
+| `ITUNESMEDIATYPE`                | "Audiobook"                                                                                                                         |
+| `pgap` (ITUNESGAPLESS)           | M4B Gapless album = 1                                                                                                               |
+| `MVNM` (MOVEMENTNAME)            | Series                                                                                                                              |
+| `MVIN` (MOVEMENT)                | Series Book #                                                                                                                       |
+| `TXXX_SERIES` (SERIES)\*\*       | Series                                                                                                                              |
+| `TXXX_SERIESPART`                | Series position                                                                                                                     |
+
+## Known Limitations
+
+1. The plugin only works if the book is available on Audible. I'm working on a solution to allow you to specify metadata manually to be applied to files in a book so that it can work with audio from any source.
+2. The plugin gets chapter data of each book and tries to match them to the imported files if and only if the number of imported files is the same as the number of chapters. This can fail and cause inaccurate track assignments if the lengths of the files don't match Audible's chapter data.
+3. Anything that would cause Beets to move data (e.g, if performing an update after changing the path format) only moves the audio files and cover, leaving desc.txt and reader.txt behind. They need to be moved manually. This is because Beets doesn't associate these files with the album in its database.
 
 ## Plex Integration
 
