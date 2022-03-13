@@ -9,7 +9,7 @@ from beets.autotag.hooks import AlbumInfo, TrackInfo
 from beets.dbcore import types
 from beets.plugins import BeetsPlugin, get_distance
 import mediafile
-from natsort import natsorted
+from natsort import os_sorted
 
 from .api import get_book_info, make_request, search_audible
 
@@ -20,13 +20,14 @@ class Audible(BeetsPlugin):
 
         self.config.add({
             'fetch_art': True,
+            'match_chapters': True,
             'source_weight': 0.0,
         })
         # Mapping of asin to cover art urls
         self.cover_art_urls = {}
         # stores paths of downloaded cover art to be used during import
         self.cover_art = {}
-        
+
         self.register_listener('write', self.on_write)
         self.register_listener('import_task_files', self.on_import_task_files)
         
@@ -121,13 +122,13 @@ class Audible(BeetsPlugin):
             # matching doesn't work well if the number of files in the album doesn't match the number of chapters
             # As a workaround, return the same number of tracks as the number of files.
             # This white lie is a workaround but works extraordinarily well
-            if is_likely_match and is_chapterized and not is_chapter_data_accurate:
+            if self.config['match_chapters'] and is_likely_match and is_chapterized and not is_chapter_data_accurate:
                 # Logging this for now because this situation 
                 # is technically possible (based on the API) but unsure how often it happens
                 self._log.warn(f"Chapter data for {a.album} could be inaccurate.")
             
-            if is_likely_match and not is_chapterized:
-                self._log.debug(f"Attempting to match non-chapterized book: album {album} with {len(items)} files to book {a.album} with {len(a.tracks)} chapters.")
+            if is_likely_match and not (is_chapterized and self.config['match_chapters']):
+                self._log.debug(f"Attempting to match book: album {album} with {len(items)} files to book {a.album} with {len(a.tracks)} chapters.")
                 
                 common_track_attributes = dict(a.tracks[0])
                 del common_track_attributes['index']
@@ -138,7 +139,10 @@ class Audible(BeetsPlugin):
                 # Use natural sorting instead of lexigraphical to avoid this order:
                 # chapter 1, 10, 12, ..., 19, 2, etc
                 # This does work correctly when the album has multiple disks
-                naturally_sorted_items = natsorted(items, key=lambda i: str(i.path))
+                # using the bytestring_path function from Beets is needed for correctness
+                # I was noticing inaccurate sorting if using str to convert paths to strings
+                naturally_sorted_items = os_sorted(items, key=lambda i: util.bytestring_path(i.path))
+
                 a.tracks = [
                     TrackInfo(**common_track_attributes, title=item.title, length=item.length, index=i+1)
                     for i, item in enumerate(naturally_sorted_items)

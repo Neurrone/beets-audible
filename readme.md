@@ -46,6 +46,9 @@ This Beets plugin solves both problems.
      - /plugins/audible # point this to the directory which contains audible.py
 
    audible:
+     # if the number of files in the book is the same as the number of chapters from Audible,
+     # attempt to match each file to an audible chapter
+     match_chapters: true
      source_weight: 0.0 # disable the source_weight penalty
      fetch_art: true # whether to retrieve cover art
 
@@ -175,7 +178,7 @@ The plugin writes the following tags:
 ## Known Limitations
 
 1. The plugin only works if the book is available on Audible. I'm working on a solution to allow you to specify metadata manually to be applied to files in a book so that it can work with audio from any source.
-2. The plugin gets chapter data of each book and tries to match them to the imported files if and only if the number of imported files is the same as the number of chapters. This can fail and cause inaccurate track assignments if the lengths of the files don't match Audible's chapter data.
+2. The plugin gets chapter data of each book and tries to match them to the imported files if and only if the number of imported files is the same as the number of chapters. This can fail and cause inaccurate track assignments if the lengths of the files don't match Audible's chapter data. If this happens, set the config option `match_chapters` to `false` temporarily and try again, and remember to uncomment that line once done.
 3. Anything that would cause Beets to move data (e.g, if performing an update after changing the path format) only moves the audio files and cover, leaving desc.txt and reader.txt behind. They need to be moved manually. This is because Beets doesn't associate these files with the album in its database.
 
 ## Plex Integration
