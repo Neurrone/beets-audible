@@ -15,12 +15,13 @@ This Beets plugin solves both problems.
 ## Installation
 
 1. Clone this repository.
-2. Install dependencies via pip: `pip install markdownify natsort`. See the next section instead if you're running Beets in Docker (highly recommended as it makes it easier to maintain a separate Beets installation dedicated to audiobooks).
+2. Install dependencies via pip: `pip install markdownify natsort beets-copyartifacts3` (copyartifacts is optional). See the next section instead if you're running Beets in Docker (highly recommended as it makes it easier to maintain a separate Beets installation dedicated to audiobooks).
 3. Use a separate beets config and database for managing audiobooks. This is the recommended Beets config for this plugin:
 
    ```yaml
    # add audible to the list of plugins
-   plugins: edit fromfilename scrub audible
+   # copyartifacts is optional but recommended if you're manually specifying metadata via metadata.yml, see the "Importing non-audible content" section
+   plugins: copyartifacts edit fromfilename scrub audible
 
    directory: /audiobooks
 
@@ -51,6 +52,9 @@ This Beets plugin solves both problems.
      match_chapters: true
      source_weight: 0.0 # disable the source_weight penalty
      fetch_art: true # whether to retrieve cover art
+
+   copyartifacts:
+     extensions: .yml # so that metadata.yml is copied, see below
 
    scrub:
      auto: yes # optional, enabling this is personal preference
@@ -99,7 +103,8 @@ This Beets plugin solves both problems.
    ```sh
    #!/bin/bash
    echo "Installing dependencies..."
-   pip install markdownify natsort
+   # copyartifacts is optional but recommended
+   pip install markdownify natsort beets-copyartifacts3
    ```
 
 4. Clone this repository into the `plugins` folder.
@@ -119,16 +124,53 @@ beet import /path/to/audiobooks
 
 The following sources of information are used to search for book matches in order of preference:
 
-1. Album and artist tags
-2. If tags are missing from the file, enabling the fromfilename plugin will attempt to deduce album and artist from file names
-3. If all else fails, use the folder name as the query string
+1. A file containing book info named `metadata.yml` (see below)
+2. Album and artist tags
+3. If tags are missing from the file, enabling the fromfilename plugin will attempt to deduce album and artist from file names
+4. If all else fails, use the folder name as the query string
 
 If you're not getting a match for a book, try the following:
 
 1. Check the tags on the files being imported. The album and artist tags should be set to the book title and author respectively.
-2. Press `E` when Beets prompts you about not being able to find a match. This prompts you to enter the artist and album name. If the wrong book is being matched because there are other books with similar names by the same author, try using the audiobook's asin as the artist and title as the album.
+2. Press `E` when Beets prompts you about not being able to find a match. This prompts for the artist and album name. If the wrong book is being matched because there are other books with similar names on Audible, try using the audiobook's asin as the artist and title as the album.
+3. Specify the book's data by using `metadata.yml` if it isn't on Audible (see the next section).
 
 The plugin gets chapter data of each book and tries to match them to the imported files if and only if the number of imported files is the same as the number of chapters from Audible. This can fail and cause inaccurate track assignments if the lengths of the files don't match Audible's chapter data. If this happens, set the config option `match_chapters` to `false` temporarily and try again, and remember to uncomment that line once done.
+
+### Importing Non-Audible Content
+
+The plugin looks for a file called `metadata.yml` in each book's folder during import. If this file is present, it exclusively uses the info in it for tagging and skips the Audible lookup.
+
+This is meant for importing audio content that isn't on Audible.
+
+Here's an example of what `metadata.yml` should look like:
+
+```yaml
+---
+# These are all required fields
+title: The Lord of the Rings (BBC Dramatization)
+authors: ["J. R. R. Tolkien", "Brian Sibley", "Michael Bakewell"]
+narrators:
+  - "Ian Holm (as Frodo)"
+  - "Sir Michael Hordern (as Gandalf)"
+  - "Robert Stephens (as Aragorn)"
+  - "John Le Mesurier"
+description: |
+  This audio set includes: The Fellowship of the Ring; The Two Towers; and The Return of the King.
+
+  Undertaking the adaptation of J.R.R. Tolkien's best-known work was an enormous task, but with its first broadcast on BBC Radio 4 on March 8, 1981, this dramatized tale of Middle Earth became an instant global classic. Thrilling dramatization by Brian Sibley and Michael Bakewell it boasts a truly outstanding cast including Ian Holm (as Frodo), Sir Michael Hordern (as Gandalf), Robert Stephens (as Aragorn), and John Le Mesurier. Tolkiens tale relates the perilous attempt by Frodo Baggins and company to defeat the evil Saruman and dispose of the Ruling Ring. Brian Sibley wrote the opening and closing narration for the character of Frodo, played by Ian Holm, who now stars as Bilbo in the feature films based on The Lord of the Rings.
+genres: ["fantasy"]
+releaseDate: 2008-08-19
+publisher: BBC Audiobooks
+
+# optional fields
+language: English # defaults to "English" if not specified
+subtitle: "some subtitle"
+series: The Lord Of The Rings
+seriesPosition: "1-3"
+```
+
+The copyartifacts plugin ensures that `metadata.yml` is copied over during the import, as it gets left in the source folder otherwise.
 
 ## Folder Structure
 
@@ -179,8 +221,7 @@ The plugin writes the following tags:
 
 ## Known Limitations
 
-1. The plugin only works if the book is available on Audible. I'm working on a solution to allow you to specify metadata manually to be applied to files in a book so that it can work with audio from any source.
-2. Anything that would cause Beets to move data (e.g, if performing an update after changing the path format) only moves the audio files and cover, leaving desc.txt and reader.txt behind. They need to be moved manually. This is because Beets doesn't associate these files with the album in its database.
+1. Anything that would cause Beets to move data (e.g, if performing an update after changing the path format) only moves the audio files and cover, leaving desc.txt and reader.txt behind. They need to be moved manually. This is because Beets doesn't associate these files with the album in its database.
 
 ## Plex Integration
 

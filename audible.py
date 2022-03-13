@@ -3,6 +3,7 @@ import os
 import pathlib
 import re
 from tempfile import NamedTemporaryFile
+import yaml
 
 from beets import importer, util
 from beets.autotag.hooks import AlbumInfo, TrackInfo
@@ -85,8 +86,20 @@ class Audible(BeetsPlugin):
         """Returns a list of AlbumInfo objects for Audible search results
         matching an album and artist (if not various).
         """
+        folder_path = pathlib.Path(items[0].path.decode()).parent
+        ymlMetadataFilePath = folder_path / 'metadata.yml'
+        if ymlMetadataFilePath.is_file():
+            self._log.debug("Reading data from metadata.yml")
+            try:
+                with open(str(ymlMetadataFilePath)) as f:
+                    data = yaml.load(f, Loader=yaml.SafeLoader)
+                    return [self.getAlbumFromYamlMetadata(data, items)]
+            except Exception as e:
+                self._log.error("Error while reading data from metadata.yml", exc_info=True)
+                return []
+
         if not album and not artist:
-            folder_name = pathlib.PurePath(str(items[0].path)).parent.name
+            folder_name = folder_path.name
             self._log.warn(f"Files missing album and artist tags. Attempting query based on folder name {folder_name}")
             query = folder_name
         else:
@@ -149,6 +162,62 @@ class Audible(BeetsPlugin):
                 ]
         return albums
     
+    def getAlbumFromYamlMetadata(self, data, items):
+        """Returns an `AlbumInfo` object by populating it with details from metadata.yml
+        """
+        title = data['title']
+        subtitle = data.get('subtitle')
+        release_date = data['releaseDate']
+        series_name = data.get('series')
+        series_position = data.get('seriesPosition')
+        content_group_description = None
+        if series_name:
+            if series_position:
+                album_sort = f"{series_name} {series_position} - {title}"
+                content_group_description = f"{series_name}, book #{series_position}"
+            else:
+                album_sort = f"{series_name} - {title}"
+        elif subtitle:
+            album_sort = f"{title} - {subtitle}"
+        else:
+            album_sort = title
+        
+        authors = ', '.join(data['authors'])
+        narrators = ', '.join(data['narrators'])
+        authors_and_narrators = ', '.join([authors, narrators])
+        description = data['description']
+        genres = '/'.join(data['genres'])
+
+        common_attributes = {
+            "artist_id": None, "album_sort": album_sort, "composer": narrators,
+            "grouping": content_group_description, "genre": genres,
+            "series_name": series_name, "series_position": series_position,
+            "comments": description, "data_source": "YAML", "subtitle": subtitle,
+        }
+
+        naturally_sorted_items = os_sorted(items, key=lambda i: util.bytestring_path(i.path))
+        # populate tracks by using some of the info from the files being imported
+        tracks = [
+            TrackInfo(
+                **common_attributes, track_id=None, artist=authors_and_narrators, 
+                index=i+1, length=item.length, title=item.title,
+            )    
+            for i, item in enumerate(naturally_sorted_items)
+        ]
+
+        year = release_date.year
+        month = release_date.month
+        day = release_date.day
+        language = data.get('language', 'English')
+        publisher = data['publisher']
+
+        return AlbumInfo(
+            tracks=tracks, album=title, album_id=None, albumtype="audiobook",
+            artist=authors, year=year, month=month, day=day,
+            original_year=year, original_month=month, original_day=day,
+            language=language, label=publisher, **common_attributes
+        )
+
     def album_for_id(self, album_id):
         """
         Fetches book info by its asin and returns an AlbumInfo object
@@ -248,7 +317,6 @@ class Audible(BeetsPlugin):
         year = int(release_date[:4])
         month = int(release_date[5:7])
         day = int(release_date[8:10])
-        mediums = []
         data_url = f"https://api.audnex.us/books/{asin}"
 
         self.cover_art_urls[asin] = cover_url
@@ -282,7 +350,8 @@ class Audible(BeetsPlugin):
             author = task.album.albumartist
             title = task.album.album
             if not cover_url:
-                self._log.warn(f"No cover art found for {title} by {author}.")
+                self._log.debug(f"No cover art found for {title} by {author}.")
+                return
             
             try:
                 cover_path = self.fetch_image(cover_url)
