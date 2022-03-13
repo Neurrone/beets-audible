@@ -128,6 +128,8 @@ If you're not getting a match for a book, try the following:
 1. Check the tags on the files being imported. The album and artist tags should be set to the book title and author respectively.
 2. Press `E` when Beets prompts you about not being able to find a match. This prompts you to enter the artist and album name. If the wrong book is being matched because there are other books with similar names by the same author, try using the audiobook's asin as the artist and title as the album.
 
+The plugin gets chapter data of each book and tries to match them to the imported files if and only if the number of imported files is the same as the number of chapters from Audible. This can fail and cause inaccurate track assignments if the lengths of the files don't match Audible's chapter data. If this happens, set the config option `match_chapters` to `false` temporarily and try again, and remember to uncomment that line once done.
+
 ## Folder Structure
 
 The config above places books according to this folder structure, which can be changed by editing the path config.
@@ -178,8 +180,7 @@ The plugin writes the following tags:
 ## Known Limitations
 
 1. The plugin only works if the book is available on Audible. I'm working on a solution to allow you to specify metadata manually to be applied to files in a book so that it can work with audio from any source.
-2. The plugin gets chapter data of each book and tries to match them to the imported files if and only if the number of imported files is the same as the number of chapters. This can fail and cause inaccurate track assignments if the lengths of the files don't match Audible's chapter data. If this happens, set the config option `match_chapters` to `false` temporarily and try again, and remember to uncomment that line once done.
-3. Anything that would cause Beets to move data (e.g, if performing an update after changing the path format) only moves the audio files and cover, leaving desc.txt and reader.txt behind. They need to be moved manually. This is because Beets doesn't associate these files with the album in its database.
+2. Anything that would cause Beets to move data (e.g, if performing an update after changing the path format) only moves the audio files and cover, leaving desc.txt and reader.txt behind. They need to be moved manually. This is because Beets doesn't associate these files with the album in its database.
 
 ## Plex Integration
 
