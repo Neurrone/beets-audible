@@ -174,7 +174,7 @@ class Audible(BeetsPlugin):
         if series_name:
             if series_position:
                 album_sort = f"{series_name} {series_position} - {title}"
-                content_group_description = f"{series_name}, book #{series_position}"
+                content_group_description = f"{series_name}, Book #{series_position}"
             else:
                 album_sort = f"{series_name} - {title}"
         elif subtitle:
@@ -275,7 +275,7 @@ class Audible(BeetsPlugin):
             series_position = series.position
             if series_position:
                 album_sort = f"{series_name} {series_position} - {title}"
-                content_group_description = f"{series_name}, book #{series_position}"
+                content_group_description = f"{series_name}, Book #{series_position}"
             else:
                 album_sort = f"{series_name} - {title}"
                 content_group_description = None
