@@ -305,7 +305,7 @@ class Audible(BeetsPlugin):
 
         tracks = [
             TrackInfo(
-                track_id=None, index=i+1, title=c.title,
+                track_id=None, index=i+1, title=c.title, medium=1,
                 artist=authors_and_narrators, length=c.length_ms / 1000,
                 **common_attributes
             )
@@ -321,7 +321,7 @@ class Audible(BeetsPlugin):
 
         self.cover_art_urls[asin] = cover_url
         return AlbumInfo(
-            tracks=tracks, album=album, album_id=None, albumtype="audiobook",
+            tracks=tracks, album=album, album_id=None, albumtype="audiobook", mediums=1,
             artist=authors, year=year, month=month, day=day,
             original_year=year, original_month=month, original_day=day,
             cover_url=cover_url, summary_html=book.summary_html,
