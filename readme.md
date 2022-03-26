@@ -104,7 +104,7 @@ This Beets plugin solves both problems.
    #!/bin/bash
    echo "Installing dependencies..."
    # copyartifacts is optional but recommended
-   pip install markdownify natsort beets-copyartifacts3
+   pip install --no-cache-dir markdownify natsort beets-copyartifacts3
    ```
 
 4. Clone this repository into the `plugins` folder.
