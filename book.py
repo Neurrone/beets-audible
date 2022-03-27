@@ -71,7 +71,7 @@ class Book:
         self.format_type = format_type
         self.genres = genres
         self.image_url = image_url
-        self.language = language
+        self.language = language.capitalize()
         self.narrators = narrators
         self.publisher = publisher
         self.release_date = release_date
