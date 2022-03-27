@@ -334,6 +334,7 @@ class Audible(BeetsPlugin):
         # Strip unwanted tags that Beets automatically adds
         tags['mb_trackid'] = None
         tags['lyrics'] = None
+        tags['bpm'] = None
 
     def fetch_art(self, session, task):
         # Only fetch art for albums
