@@ -35,10 +35,16 @@ class Audible(BeetsPlugin):
         if self.config['fetch_art']:
             self.import_stages = [self.fetch_art]
         
-        # see https://github.com/beetbox/mediafile/blob/master/mediafile.py
+        # see the following:
+        # Beet's internal mapping to tags: https://github.com/beetbox/mediafile/blob/master/mediafile.py
+        # Mp3tag's mapping: https://docs.mp3tag.de/mapping/
+        # Tag Mapping from the Hydrogenaudio Knowledgebase: https://wiki.hydrogenaud.io/index.php?title=Tag_Mapping
+        # List of M4b tags: https://mutagen.readthedocs.io/en/latest/api/mp4.html
         album_sort = mediafile.MediaField(
             mediafile.MP3StorageStyle(u'TSOA'),
-            mediafile.StorageStyle(u'TSOA')
+            mediafile.MP4StorageStyle('soal'),
+            mediafile.StorageStyle(u'TSOA'),
+            mediafile.ASFStorageStyle('WM/AlbumSortOrder'),
         )
         self.add_media_field('album_sort', album_sort)
 
@@ -51,19 +57,26 @@ class Audible(BeetsPlugin):
         series_name = mediafile.MediaField(
             mediafile.MP3StorageStyle(u'MVNM'),
             mediafile.MP3DescStorageStyle(u'SERIES'),
+            mediafile.MP4StorageStyle('\xa9mvn'),
             mediafile.StorageStyle(u'MVNM')
         )
         self.add_media_field('series_name', series_name)
         series_position = mediafile.MediaField(
             mediafile.MP3StorageStyle(u'MVIN'),
             mediafile.MP3DescStorageStyle(u'SERIESPOSITION'),
+            # Using the "mvi" tag for M4b wouldn't work when the value can't be converted to an integer
+            # For instance, an m4b containing multiple books has series position "1-3"
+            # Trying to do so would cause an exception, hence why this is commented out
+            # mediafile.MP4StorageStyle('\xa9mvi'),
             mediafile.StorageStyle(u'MVIN')
         )
         self.add_media_field('series_position', series_position)
 
         subtitle = mediafile.MediaField(
             mediafile.MP3StorageStyle(u'TIT3'),
-            mediafile.StorageStyle(u'TIT3')
+            mediafile.MP4StorageStyle('----:com.apple.iTunes:SUBTITLE'),
+            mediafile.StorageStyle(u'TIT3'),
+            mediafile.ASFStorageStyle('WM/SubTitle'),
         )
         self.add_media_field('subtitle', subtitle)
 
