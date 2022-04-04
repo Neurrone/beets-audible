@@ -200,7 +200,7 @@ class Audible(BeetsPlugin):
         tracks = [
             TrackInfo(
                 **common_attributes, track_id=None, artist=authors_and_narrators, 
-                index=i+1, length=item.length, title=item.title,
+                index=i+1, length=item.length, title=item.title, medium=1
             )    
             for i, item in enumerate(naturally_sorted_items)
         ]
@@ -212,7 +212,7 @@ class Audible(BeetsPlugin):
         publisher = data['publisher']
 
         return AlbumInfo(
-            tracks=tracks, album=title, album_id=None, albumtype="audiobook",
+            tracks=tracks, album=title, album_id=None, albumtype="audiobook", mediums=1,
             artist=authors, year=year, month=month, day=day,
             original_year=year, original_month=month, original_day=day,
             language=language, label=publisher, **common_attributes
