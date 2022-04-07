@@ -213,7 +213,7 @@ class Audible(BeetsPlugin):
         tracks = [
             TrackInfo(
                 **common_attributes, track_id=None, artist=authors_and_narrators, 
-                index=i+1, length=item.length, title=item.title,
+                index=i+1, length=item.length, title=item.title, medium=1
             )    
             for i, item in enumerate(naturally_sorted_items)
         ]
@@ -225,7 +225,7 @@ class Audible(BeetsPlugin):
         publisher = data['publisher']
 
         return AlbumInfo(
-            tracks=tracks, album=title, album_id=None, albumtype="audiobook",
+            tracks=tracks, album=title, album_id=None, albumtype="audiobook", mediums=1,
             artist=authors, year=year, month=month, day=day,
             original_year=year, original_month=month, original_day=day,
             language=language, label=publisher, **common_attributes
@@ -318,7 +318,7 @@ class Audible(BeetsPlugin):
 
         tracks = [
             TrackInfo(
-                track_id=None, index=i+1, title=c.title,
+                track_id=None, index=i+1, title=c.title, medium=1,
                 artist=authors_and_narrators, length=c.length_ms / 1000,
                 **common_attributes
             )
@@ -334,7 +334,7 @@ class Audible(BeetsPlugin):
 
         self.cover_art_urls[asin] = cover_url
         return AlbumInfo(
-            tracks=tracks, album=album, album_id=None, albumtype="audiobook",
+            tracks=tracks, album=album, album_id=None, albumtype="audiobook", mediums=1,
             artist=authors, year=year, month=month, day=day,
             original_year=year, original_month=month, original_day=day,
             cover_url=cover_url, summary_html=book.summary_html,
