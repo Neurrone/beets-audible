@@ -34,8 +34,6 @@ def search_goodreads(asin: str, api_key: str) -> Dict:
         original_date["year"] = int(work.findtext("original_publication_year"))
         original_date["month"] = int(work.findtext("original_publication_month"))
         original_date["day"] = int(work.findtext("original_publication_day"))
-
-        print(original_date)
     
     return original_date
 
