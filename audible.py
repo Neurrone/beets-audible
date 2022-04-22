@@ -12,7 +12,7 @@ from beets.plugins import BeetsPlugin, get_distance
 import mediafile
 from natsort import os_sorted
 
-from .api import get_book_info, make_request, search_audible
+from .api import get_book_info, make_request, search_audible, search_goodreads
 
 class Audible(BeetsPlugin):
     data_source = 'Audible'
@@ -333,10 +333,22 @@ class Audible(BeetsPlugin):
         data_url = f"https://api.audnex.us/books/{asin}"
 
         self.cover_art_urls[asin] = cover_url
+
+        original_year=year
+        original_month=month
+        original_day=day
+
+        if self.config['goodreads_apikey']:
+            original_date = search_goodreads(asin, self.config['goodreads_apikey'])
+            if original_date["year"]:
+                original_year=original_date["year"]
+                original_month=original_date["month"]
+                original_day=original_date["day"]
+        
         return AlbumInfo(
             tracks=tracks, album=album, album_id=None, albumtype="audiobook", mediums=1,
             artist=authors, year=year, month=month, day=day,
-            original_year=year, original_month=month, original_day=day,
+            original_year=original_year, original_month=original_month, original_day=original_day,
             cover_url=cover_url, summary_html=book.summary_html,
             is_chapter_data_accurate=is_chapter_data_accurate,
             language=book.language, label=book.publisher, **common_attributes
