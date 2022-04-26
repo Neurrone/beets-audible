@@ -218,7 +218,7 @@ The plugin writes the following tags:
 | `MVNM` (MOVEMENTNAME)                    | Series                                                                                                                              |
 | `MVIN` / `MVI` for m4b files (MOVEMENT)  | Series Book #                                                                                                                       |
 | `TXXX_SERIES` (SERIES)                   | Series                                                                                                                              |
-| `TXXX_SERIESPART`                        | Series position                                                                                                                     |
+| `TXXX_SERIES-PART`                       | Series position                                                                                                                     |
 
 ## Known Limitations
 

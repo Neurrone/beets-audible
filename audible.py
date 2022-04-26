@@ -70,7 +70,7 @@ class Audible(BeetsPlugin):
         self.add_media_field('series_name', series_name)
         series_position = mediafile.MediaField(
             mediafile.MP3StorageStyle(u'MVIN'),
-            mediafile.MP3DescStorageStyle(u'SERIESPOSITION'),
+            mediafile.MP3DescStorageStyle(u'SERIES-PART'),
             # Using the "mvi" tag for M4b wouldn't work when the value can't be converted to an integer
             # For instance, an m4b containing multiple books has series position "1-3"
             # Trying to do so would cause an exception, hence why this is commented out here
