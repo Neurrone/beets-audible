@@ -49,10 +49,17 @@ class Audible(BeetsPlugin):
         self.add_media_field('album_sort', album_sort)
 
         itunes_media_type = mediafile.MediaField(
-            mediafile.MP3DescStorageStyle(u'ITUNESMEDIATYPE'),
-            mediafile.StorageStyle(u'ITUNESMEDIATYPE')
+            mediafile.MP4StorageStyle('stik', as_type=int),
         )
         self.add_media_field('itunes_media_type', itunes_media_type)
+        show_movement = mediafile.MediaField(
+            mediafile.MP4StorageStyle('shwm', as_type=int),
+        )
+        self.add_media_field('show_movement', show_movement)
+        gapless = mediafile.MediaField(
+            mediafile.MP4StorageStyle('pgap', as_type=bool),
+        )
+        self.add_media_field('gapless', gapless)
 
         series_name = mediafile.MediaField(
             mediafile.MP3StorageStyle(u'MVNM'),
@@ -66,11 +73,16 @@ class Audible(BeetsPlugin):
             mediafile.MP3DescStorageStyle(u'SERIESPOSITION'),
             # Using the "mvi" tag for M4b wouldn't work when the value can't be converted to an integer
             # For instance, an m4b containing multiple books has series position "1-3"
-            # Trying to do so would cause an exception, hence why this is commented out
+            # Trying to do so would cause an exception, hence why this is commented out here
+            # and handled below separately
             # mediafile.MP4StorageStyle('\xa9mvi'),
             mediafile.StorageStyle(u'MVIN')
         )
         self.add_media_field('series_position', series_position)
+        mvi = mediafile.MediaField(
+            mediafile.MP4StorageStyle('\xa9mvi', as_type=int),
+        )
+        self.add_media_field('mvi', mvi)
 
         subtitle = mediafile.MediaField(
             mediafile.MP3StorageStyle(u'TIT3'),
@@ -343,11 +355,21 @@ class Audible(BeetsPlugin):
         )
     
     def on_write(self, item, path, tags):
-        tags["itunes_media_type"] = "Audiobook"
         # Strip unwanted tags that Beets automatically adds
         tags['mb_trackid'] = None
         tags['lyrics'] = None
         tags['bpm'] = None
+        if path.endswith(b"m4b"):
+            # audiobook media type, see https://exiftool.org/TagNames/QuickTime.html
+            tags["itunes_media_type"] = 2
+            tags["gapless"] = True
+            if tags.get("series_name"):
+                tags["show_movement"] = 1
+            try:
+                # The "mvi" tag for m4b files only accepts integers
+                tags["mvi"] = int(tags.get("series_position"))
+            except Exception:
+                pass
 
     def fetch_art(self, session, task):
         # Only fetch art for albums

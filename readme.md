@@ -198,26 +198,27 @@ Desc.txt and reader.txt contain the book description and narrator populated from
 
 The plugin writes the following tags:
 
-| ID3 Tag                          | Audible.com Value                                                                                                                   |
-| -------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
-| `TIT1` (CONTENTGROUP)            | Series, Book #                                                                                                                      |
-| `TALB` (ALBUM)                   | Title                                                                                                                               |
-| `TIT3` (SUBTITLE)                | Subtitle                                                                                                                            |
-| `TPE1` (ARTIST)                  | Author, Narrator                                                                                                                    |
-| `TPE2` (ALBUMARTIST)             | Author                                                                                                                              |
-| `TCOM` (COMPOSER)                | Narrator                                                                                                                            |
-| `TCON` (GENRE)                   | Genre1/Genre2                                                                                                                       |
-| `TDRC` and `TDRL` (release date) | audio publication date                                                                                                              |
-| `COMM` (COMMENT)                 | Publisher's Summary (MP3)                                                                                                           |
-| `desc` (DESCRIPTION)             | Publisher's Summary (M4B)                                                                                                           |
-| `TSOA` (ALBUMSORT)               | If ALBUM only, then %Title%<br>If ALBUM and SUBTITLE, then %Title% - %Subtitle%<br>If Series, then %Series% %Series-part% - %Title% |
-| `TPUB` (PUBLISHER)               | Publisher                                                                                                                           |
-| `ASIN` (ASIN)                    | Amazon Standard Identification Number                                                                                               |
-| `ITUNESMEDIATYPE`                | "Audiobook"                                                                                                                         |
-| `MVNM` (MOVEMENTNAME)            | Series                                                                                                                              |
-| `MVIN` (MOVEMENT)                | Series Book #                                                                                                                       |
-| `TXXX_SERIES` (SERIES)           | Series                                                                                                                              |
-| `TXXX_SERIESPART`                | Series position                                                                                                                     |
+| ID3 Tag                                  | Audible.com Value                                                                                                                   |
+| ---------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| `TIT1` (CONTENTGROUP)                    | Series, Book #                                                                                                                      |
+| `TALB` (ALBUM)                           | Title                                                                                                                               |
+| `TIT3` (SUBTITLE)                        | Subtitle                                                                                                                            |
+| `TPE1` (ARTIST)                          | Author, Narrator                                                                                                                    |
+| `TPE2` (ALBUMARTIST)                     | Author                                                                                                                              |
+| `TCOM` (COMPOSER)                        | Narrator                                                                                                                            |
+| `TCON` (GENRE)                           | Genre1/Genre2                                                                                                                       |
+| `TDRC` and `TDRL` (release date)         | audio publication date                                                                                                              |
+| `COMM` or `desc` for m4b files (COMMENT) | Publisher's Summary                                                                                                                 |
+| `TSOA` (ALBUMSORT)                       | If ALBUM only, then %Title%<br>If ALBUM and SUBTITLE, then %Title% - %Subtitle%<br>If Series, then %Series% %Series-part% - %Title% |
+| `TPUB` (PUBLISHER)                       | Publisher                                                                                                                           |
+| `ASIN` (ASIN)                            | Amazon Standard Identification Number                                                                                               |
+| `stik` (media type), m4b only            | 2 (audiobook)                                                                                                                       |
+| `pgap` (gapless), m4b only               | true                                                                                                                                |
+| `shwm` (show movement), m4b only         | 1 if part of a series                                                                                                               |
+| `MVNM` (MOVEMENTNAME)                    | Series                                                                                                                              |
+| `MVIN` / `MVI` for m4b files (MOVEMENT)  | Series Book #                                                                                                                       |
+| `TXXX_SERIES` (SERIES)                   | Series                                                                                                                              |
+| `TXXX_SERIESPART`                        | Series position                                                                                                                     |
 
 ## Known Limitations
 
