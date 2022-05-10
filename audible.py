@@ -340,10 +340,10 @@ class Audible(BeetsPlugin):
 
         if self.config['goodreads_apikey']:
             original_date = search_goodreads(asin, self.config['goodreads_apikey'])
-            if original_date["year"]:
-                original_year=original_date["year"]
-                original_month=original_date["month"]
-                original_day=original_date["day"]
+            if original_date.get("year") is not None:
+                original_year=original_date.get("year")
+                original_month=original_date.get("month")
+                original_day=original_date.get("day")
         
         return AlbumInfo(
             tracks=tracks, album=album, album_id=None, albumtype="audiobook", mediums=1,
