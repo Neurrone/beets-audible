@@ -65,6 +65,7 @@ class Audible(BeetsPlugin):
             mediafile.MP3StorageStyle(u'MVNM'),
             mediafile.MP3DescStorageStyle(u'SERIES'),
             mediafile.MP4StorageStyle('\xa9mvn'),
+            mediafile.MP4StorageStyle('----:com.apple.iTunes:SERIES'),
             mediafile.StorageStyle(u'MVNM')
         )
         self.add_media_field('series_name', series_name)
@@ -76,6 +77,7 @@ class Audible(BeetsPlugin):
             # Trying to do so would cause an exception, hence why this is commented out here
             # and handled below separately
             # mediafile.MP4StorageStyle('\xa9mvi'),
+            mediafile.MP4StorageStyle('----:com.apple.iTunes:SERIES-PART'),
             mediafile.StorageStyle(u'MVIN')
         )
         self.add_media_field('series_position', series_position)
