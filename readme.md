@@ -146,6 +146,9 @@ The plugin can search Goodreads to find the original publication date of the wor
      goodreads_apikey: [APIKEYHERE] #optional
 ```
 
+If you want this date used as the release date for the audiobook, you must set [original_date](https://beets.readthedocs.io/en/stable/reference/config.html#original-date) to yes in your beets config
+
+
 ### Importing Non-Audible Content
 
 The plugin looks for a file called `metadata.yml` in each book's folder during import. If this file is present, it exclusively uses the info in it for tagging and skips the Audible lookup.
