@@ -23,6 +23,7 @@ class Audible(BeetsPlugin):
             'fetch_art': True,
             'match_chapters': True,
             'source_weight': 0.0,
+            'include_narrator_in_artists': True
         })
         # Mapping of asin to cover art urls
         self.cover_art_urls = {}
@@ -207,6 +208,11 @@ class Audible(BeetsPlugin):
         authors = ', '.join(data['authors'])
         narrators = ', '.join(data['narrators'])
         authors_and_narrators = ', '.join([authors, narrators])
+        if self.config['include_narrator_in_artists']:
+            artists = authors_and_narrators
+        else:
+            artists = authors        
+
         description = data['description']
         genres = '/'.join(data['genres'])
 
@@ -221,7 +227,7 @@ class Audible(BeetsPlugin):
         # populate tracks by using some of the info from the files being imported
         tracks = [
             TrackInfo(
-                **common_attributes, track_id=None, artist=authors_and_narrators, 
+                **common_attributes, track_id=None, artist=artists, 
                 index=i+1, length=item.length, title=item.title, medium=1
             )    
             for i, item in enumerate(naturally_sorted_items)
@@ -314,6 +320,11 @@ class Audible(BeetsPlugin):
         authors = ', '.join([a.name for a in book.authors])
         narrators = ', '.join([n.name for n in book.narrators])
         authors_and_narrators = ', '.join([authors, narrators])
+        if self.config['include_narrator_in_artists']:
+            artists = authors_and_narrators
+        else:
+            artists = authors
+
         description = book.summary_markdown
         cover_url = book.image_url
         genres = '/'.join([g.name for g in book.genres])
@@ -328,7 +339,7 @@ class Audible(BeetsPlugin):
         tracks = [
             TrackInfo(
                 track_id=None, index=i+1, title=c.title, medium=1,
-                artist=authors_and_narrators, length=c.length_ms / 1000,
+                artist=artists, length=c.length_ms / 1000,
                 **common_attributes
             )
             for i, c in enumerate(chapters.chapters)
