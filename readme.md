@@ -213,7 +213,6 @@ The plugin writes the following tags:
 | `TPUB` (PUBLISHER)                       | Publisher                                                                                                                           |
 | `ASIN` (ASIN)                            | Amazon Standard Identification Number                                                                                               |
 | `stik` (media type), m4b only            | 2 (audiobook)                                                                                                                       |
-| `pgap` (gapless), m4b only               | true                                                                                                                                |
 | `shwm` (show movement), m4b only         | 1 if part of a series                                                                                                               |
 | `MVNM` (MOVEMENTNAME)                    | Series                                                                                                                              |
 | `MVIN` / `MVI` for m4b files (MOVEMENT)  | Series Book #                                                                                                                       |

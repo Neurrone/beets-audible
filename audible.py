@@ -56,10 +56,6 @@ class Audible(BeetsPlugin):
             mediafile.MP4StorageStyle('shwm', as_type=int),
         )
         self.add_media_field('show_movement', show_movement)
-        gapless = mediafile.MediaField(
-            mediafile.MP4StorageStyle('pgap', as_type=bool),
-        )
-        self.add_media_field('gapless', gapless)
 
         series_name = mediafile.MediaField(
             mediafile.MP3StorageStyle(u'MVNM'),
@@ -165,7 +161,7 @@ class Audible(BeetsPlugin):
                 # is technically possible (based on the API) but unsure how often it happens
                 self._log.warn(f"Chapter data for {a.album} could be inaccurate.")
             
-            if is_likely_match and not (is_chapterized and self.config['match_chapters']):
+            if is_likely_match and (not is_chapterized or not self.config['match_chapters']):
                 self._log.debug(f"Attempting to match book: album {album} with {len(items)} files to book {a.album} with {len(a.tracks)} chapters.")
                 
                 common_track_attributes = dict(a.tracks[0])
@@ -180,7 +176,6 @@ class Audible(BeetsPlugin):
                 # using the bytestring_path function from Beets is needed for correctness
                 # I was noticing inaccurate sorting if using str to convert paths to strings
                 naturally_sorted_items = os_sorted(items, key=lambda i: util.bytestring_path(i.path))
-
                 a.tracks = [
                     TrackInfo(**common_track_attributes, title=item.title, length=item.length, index=i+1)
                     for i, item in enumerate(naturally_sorted_items)
@@ -362,7 +357,6 @@ class Audible(BeetsPlugin):
         if path.endswith(b"m4b"):
             # audiobook media type, see https://exiftool.org/TagNames/QuickTime.html
             tags["itunes_media_type"] = 2
-            tags["gapless"] = True
             if tags.get("series_name"):
                 tags["show_movement"] = 1
             try:
