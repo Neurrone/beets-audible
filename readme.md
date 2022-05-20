@@ -137,6 +137,18 @@ If you're not getting a match for a book, try the following:
 
 The plugin gets chapter data of each book and tries to match them to the imported files if and only if the number of imported files is the same as the number of chapters from Audible. This can fail and cause inaccurate track assignments if the lengths of the files don't match Audible's chapter data. If this happens, set the config option `match_chapters` to `false` temporarily and try again, and remember to uncomment that line once done.
 
+### Goodreads for original work first published date
+
+The plugin can search Goodreads to find the original publication date of the work the audiobook is based on by searching on the ASIN. To enable this option you need a Goodreads API key and you must set that key in the audible plugin config
+
+```
+   audible:
+     goodreads_apikey: [APIKEYHERE] #optional
+```
+
+If you want this date used as the release date for the audiobook, you must set [original_date](https://beets.readthedocs.io/en/stable/reference/config.html#original-date) to yes in your beets config
+
+
 ### Importing Non-Audible Content
 
 The plugin looks for a file called `metadata.yml` in each book's folder during import. If this file is present, it exclusively uses the info in it for tagging and skips the Audible lookup.
