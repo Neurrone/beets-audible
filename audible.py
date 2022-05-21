@@ -23,8 +23,10 @@ class Audible(BeetsPlugin):
             'fetch_art': True,
             'match_chapters': True,
             'source_weight': 0.0,
-            'include_narrator_in_artists': True
+            'include_narrator_in_artists': True,
+            'goodreads_apikey': None
         })
+        self.config['goodreads_apikey'].redact = True
         # Mapping of asin to cover art urls
         self.cover_art_urls = {}
         # stores paths of downloaded cover art to be used during import
