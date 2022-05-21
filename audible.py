@@ -50,7 +50,10 @@ class Audible(BeetsPlugin):
             mediafile.ASFStorageStyle('WM/AlbumSortOrder'),
         )
         self.add_media_field('album_sort', album_sort)
-
+        desc = mediafile.MediaField(
+            mediafile.MP4StorageStyle('desc')
+        )
+        self.add_media_field('desc', desc)
         itunes_media_type = mediafile.MediaField(
             mediafile.MP4StorageStyle('stik', as_type=int),
         )
@@ -383,6 +386,7 @@ class Audible(BeetsPlugin):
         tags['bpm'] = None
         if path.endswith(b"m4b"):
             # audiobook media type, see https://exiftool.org/TagNames/QuickTime.html
+            tags["desc"] = tags.get("comments")
             tags["itunes_media_type"] = 2
             if tags.get("series_name"):
                 tags["show_movement"] = 1
