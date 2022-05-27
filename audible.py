@@ -339,6 +339,7 @@ class Audible(BeetsPlugin):
             "composer": narrators, "grouping": content_group_description,
             "genre": genres, "series_name": series_name, "series_position": series_position,
             "comments": description, "data_source": self.data_source, "subtitle": subtitle,
+            "catalognum": asin
         }
 
         tracks = [
