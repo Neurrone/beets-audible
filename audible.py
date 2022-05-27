@@ -371,7 +371,7 @@ class Audible(BeetsPlugin):
                 original_day=original_date.get("day")
         
         return AlbumInfo(
-            tracks=tracks, album=album, album_id=None, albumtype="audiobook", mediums=1,
+            tracks=tracks, album=album, album_id=asin, albumtype="audiobook", mediums=1,
             artist=authors, year=year, month=month, day=day,
             original_year=original_year, original_month=original_month, original_day=original_day,
             cover_url=cover_url, summary_html=book.summary_html,
@@ -381,6 +381,7 @@ class Audible(BeetsPlugin):
     
     def on_write(self, item, path, tags):
         # Strip unwanted tags that Beets automatically adds
+        tags['mb_albumid'] = None
         tags['mb_trackid'] = None
         tags['lyrics'] = None
         tags['bpm'] = None
