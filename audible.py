@@ -24,6 +24,8 @@ class Audible(BeetsPlugin):
             'match_chapters': True,
             'source_weight': 0.0,
             'include_narrator_in_artists': True,
+            'remove_series_reference_in_title': False,
+            'remove_series_reference_in_subtitle': False,
             'goodreads_apikey': None
         })
         self.config['goodreads_apikey'].redact = True
@@ -305,12 +307,29 @@ class Audible(BeetsPlugin):
         if series:
             series_name = series.name
             series_position = series.position
+
+            title_cruft = f", Book {series_position}"
+            if self.config['remove_series_reference_in_title'] and title.endswith(title_cruft):
+                #clean up title
+                #check if ', Book X' is in title, remove it
+                self._log.debug(f"Title contains '{title_cruft}'. Removing it.")
+                title = title.removesuffix(title_cruft)
+
             if series_position:
                 album_sort = f"{series_name} {series_position} - {title}"
                 content_group_description = f"{series_name}, Book #{series_position}"
             else:
                 album_sort = f"{series_name} - {title}"
                 content_group_description = None
+
+            #clean up subtitle
+            if self.config['remove_series_reference_in_subtitle'] and subtitle and series_name.lower() in subtitle.lower() and 'book' in subtitle.lower():
+                #subtitle contains both the series name and the word "book"
+                #so it is likely just "Series, Book X" or "Book X in Series"
+                #don't include subtitle
+                subtitle = None
+                self._log.debug(f"Subtitle of '{subtitle}' is mostly just the series name. Removing it.")
+
         elif subtitle:
             album_sort = f"{title} - {subtitle}"
         else:
