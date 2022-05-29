@@ -8,7 +8,7 @@ from .book import Book, BookChapters
 
 AUDIBLE_ENDPOINT="https://api.audible.com/1.0/catalog/products"
 AUDNEX_ENDPOINT="https://api.audnex.us"
-GOODREADS_ENDPOINT="https://www.goodreads.com"
+GOODREADS_ENDPOINT="https://www.goodreads.com/search/index.xml"
 USER_AGENT = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/35.0.1916.47 Safari/537.36"
 
 def search_audible(keywords: str) -> Dict:
@@ -22,20 +22,14 @@ def search_audible(keywords: str) -> Dict:
     response = json.loads(make_request(f"{AUDIBLE_ENDPOINT}?{query}"))
     return response
 
-def search_goodreads(asin: str, api_key: str) -> Dict:
-    goodreads_response = ET.fromstring(make_request(f"{GOODREADS_ENDPOINT}/search/index.xml?key={api_key}&q={asin}"))
-
-    totalresults = int(goodreads_response.findtext("./search/total-results"))
-    original_date = {}
-
-    if totalresults == 1:
-        #if just one match assume it is correct for now
-        work = goodreads_response.find("./search/results/work")
-        original_date["year"] = int(work.findtext("original_publication_year"))
-        original_date["month"] = int(work.findtext("original_publication_month"))
-        original_date["day"] = int(work.findtext("original_publication_day"))
-    
-    return original_date
+def search_goodreads(api_key: str, keywords: str) -> Dict:
+    params = {
+        "key": api_key,
+        "q": keywords
+    }
+    query = parse.urlencode( params )
+    url = f"{GOODREADS_ENDPOINT}?{query}"
+    return ET.fromstring(make_request(url))
 
 def get_book_info(asin: str) -> Tuple[Book, BookChapters]:
     book_response = json.loads(make_request(f"{AUDNEX_ENDPOINT}/books/{asin}"))
