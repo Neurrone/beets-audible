@@ -301,7 +301,6 @@ class Audible(BeetsPlugin):
         
         release_date = book.release_date
         series = book.series
-        album = title
         
         if series:
             series_name = series.name
@@ -371,7 +370,7 @@ class Audible(BeetsPlugin):
                 original_day=original_date.get("day")
         
         return AlbumInfo(
-            tracks=tracks, album=album, album_id=None, albumtype="audiobook", mediums=1,
+            tracks=tracks, album=title, album_id=None, albumtype="audiobook", mediums=1,
             artist=authors, year=year, month=month, day=day,
             original_year=original_year, original_month=original_month, original_day=original_day,
             cover_url=cover_url, summary_html=book.summary_html,
