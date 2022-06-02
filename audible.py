@@ -427,9 +427,12 @@ class Audible(BeetsPlugin):
     def parse_original_date(self, work: Dict) -> Dict:
         original_date = {}
         if work is not None:
-            original_date["year"] = int(work.findtext("original_publication_year"))
-            original_date["month"] = int(work.findtext("original_publication_month"))
-            original_date["day"] = int(work.findtext("original_publication_day"))
+            year = work.findtext("original_publication_year")
+            original_date["year"] = int(year) if year.isdigit() else None
+            month = work.findtext("original_publication_month")
+            original_date["month"] = int(month) if month.isdigit() else None
+            day = work.findtext("original_publication_day")
+            original_date["day"] = int(day) if day.isdigit() else None
         
         return original_date
     
