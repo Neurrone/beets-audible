@@ -310,7 +310,6 @@ class Audible(BeetsPlugin):
 
             title_cruft = f", Book {series_position}"
             if self.config['remove_series_reference_in_title'] and title.endswith(title_cruft):
-                #clean up title
                 #check if ', Book X' is in title, remove it
                 self._log.debug(f"Title contains '{title_cruft}'. Removing it.")
                 title = title.removesuffix(title_cruft)
