@@ -23,8 +23,8 @@ class Audible(BeetsPlugin):
             'fetch_art': True,
             'match_chapters': True,
             'source_weight': 0.0,
-            'desc_txt': True,
-            'reader_txt': True,
+            'write_description_file': True,
+            'write_reader_file': True,
             'include_narrator_in_artists': True,
             'goodreads_apikey': None
         })
@@ -449,12 +449,12 @@ class Audible(BeetsPlugin):
         item = items[0]
         destination = os.path.dirname(item.path)
         
-        if self.config['desc_txt']:
+        if self.config['write_description_file']:
             description = item.comments
             with open(os.path.join(destination, b'desc.txt'), 'w') as f:
                 f.write(description)
         
-        if self.config['reader_txt']:
+        if self.config['write_reader_file']:
             narrator = item.composer
             with open(os.path.join(destination, b'reader.txt'), 'w') as f:
                 f.write(narrator)
