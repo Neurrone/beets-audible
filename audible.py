@@ -24,6 +24,8 @@ class Audible(BeetsPlugin):
             'match_chapters': True,
             'source_weight': 0.0,
             'include_narrator_in_artists': True,
+            'remove_series_reference_in_title': False,
+            'remove_series_reference_in_subtitle': False,
             'goodreads_apikey': None
         })
         self.config['goodreads_apikey'].redact = True
@@ -301,17 +303,32 @@ class Audible(BeetsPlugin):
         
         release_date = book.release_date
         series = book.series
-        album = title
         
         if series:
             series_name = series.name
             series_position = series.position
+
+            title_cruft = f", Book {series_position}"
+            if self.config['remove_series_reference_in_title'] and title.endswith(title_cruft):
+                #check if ', Book X' is in title, remove it
+                self._log.debug(f"Title contains '{title_cruft}'. Removing it.")
+                title = title.removesuffix(title_cruft)
+
             if series_position:
                 album_sort = f"{series_name} {series_position} - {title}"
                 content_group_description = f"{series_name}, Book #{series_position}"
             else:
                 album_sort = f"{series_name} - {title}"
                 content_group_description = None
+
+            #clean up subtitle
+            if self.config['remove_series_reference_in_subtitle'] and subtitle and series_name.lower() in subtitle.lower() and 'book' in subtitle.lower():
+                #subtitle contains both the series name and the word "book"
+                #so it is likely just "Series, Book X" or "Book X in Series"
+                #don't include subtitle
+                subtitle = None
+                self._log.debug(f"Subtitle of '{subtitle}' is mostly just the series name. Removing it.")
+
         elif subtitle:
             album_sort = f"{title} - {subtitle}"
         else:
@@ -371,7 +388,7 @@ class Audible(BeetsPlugin):
                 original_day=original_date.get("day")
         
         return AlbumInfo(
-            tracks=tracks, album=album, album_id=None, albumtype="audiobook", mediums=1,
+            tracks=tracks, album=title, album_id=None, albumtype="audiobook", mediums=1,
             artist=authors, year=year, month=month, day=day,
             original_year=original_year, original_month=original_month, original_day=original_day,
             cover_url=cover_url, summary_html=book.summary_html,
