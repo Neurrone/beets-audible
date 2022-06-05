@@ -53,6 +53,8 @@ This Beets plugin solves both problems.
      source_weight: 0.0 # disable the source_weight penalty
      fetch_art: true # whether to retrieve cover art
      include_narrator_in_artists: true # include author and narrator in artist tag. Or just author
+     write_description_file: true # output desc.txt
+     write_reader_file: true # output reader.txt
 
    copyartifacts:
      extensions: .yml # so that metadata.yml is copied, see below
