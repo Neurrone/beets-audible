@@ -9,7 +9,6 @@ def get_original_date(self, asin: str, authors: str, title: str) -> Dict:
 
     if totalresults == 0:
         #search with author and title
-        #set asin to none to determine that we are querying on author/title
         self._log.debug(f"search Goodreads again based on author/title.")
         goodreads_response = search_goodreads(api_key, f"{authors} {title}")
         totalresults = goodreads_get_total_result(goodreads_response)
