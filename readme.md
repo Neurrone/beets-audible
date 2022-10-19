@@ -38,10 +38,8 @@ This Beets plugin solves both problems.
      albumtype_soundtrack: Soundtracks/$album/$track $title
 
    # disables musicbrainz lookup, as it doesn't help for audiobooks
-   # This is a workaround, as there is currently no built-in way of doing so
-   # see https://github.com/beetbox/beets/issues/400
    musicbrainz:
-     host: localhost:5123
+     enabled: no
 
    pluginpath:
      - /plugins/audible # point this to the directory which contains audible.py
