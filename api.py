@@ -53,6 +53,9 @@ def make_request(url):
             with request.urlopen(req) as response:
                 return response.read()
         except HTTPError as e:
+            if e.code == 404:
+                print(f"Error while requesting {url}: status code {e.code}, {e.reason}")
+                raise e
             print(f"Error while requesting {url}, attempt {n+1}/{NUM_RETRIES}: status code {e.code}, {e.reason}")
             if n < NUM_RETRIES - 1:
                 sleep(SLEEP_TIME)
