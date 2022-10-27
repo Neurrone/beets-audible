@@ -293,7 +293,7 @@ class Audible(BeetsPlugin):
                 try:
                     out.append(self.get_album_info(p['asin']))
                 except urllib.error.HTTPError:
-                    pass
+                    self._log.debug("Error while fetching book information from Audnex", exc_info=True)
             return out
         except Exception as e:
             self._log.warn("Error while fetching book information from Audnex",
