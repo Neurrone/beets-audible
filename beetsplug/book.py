@@ -1,23 +1,29 @@
 import re
 from typing import Dict, List, Optional
+
 from markdownify import markdownify as md
 
 # This would be much less verbose with dataclasses, only available in Python 3.7+
 # Beets has a minimum Python version requirement of 3.6, hence I'm not using dataclasses here
 
+
 class Author:
     asin: Optional[str]
     name: str
-    def __init__(self, asin, name): 
+
+    def __init__(self, asin, name):
         self.asin = asin
         self.name = name
+
 
 class Genre:
     asin: str
     name: str
-    def __init__(self, asin, name): 
+
+    def __init__(self, asin, name):
         self.asin = asin
         self.name = name
+
 
 class Tag:
     """
@@ -25,46 +31,69 @@ class Tag:
     """
     asin: str
     name: str
-    def __init__(self, asin, name): 
+
+    def __init__(self, asin, name):
         self.asin = asin
         self.name = name
 
+
 class Narrator:
     name: str
+
     def __init__(self, name):
         self.name = name
+
 
 class Series:
     asin: str
     name: str
     # Yes, sadly its possible for series to not have a position
-    position: Optional[str] # e.g, "2", "8.5", "1-5"
-    
-    def __init__(self, asin, name, position): 
+    position: Optional[str]  # e.g, "2", "8.5", "1-5"
+
+    def __init__(self, asin, name, position):
         self.asin = asin
         self.name = name
         self.position = position
+
 
 class Book:
     asin: str
     authors: List[Author]
     description: str
-    format_type: str # e.g, "unabridged"
-    genres: List[Genre] # may be an empty list
+    format_type: str  # e.g, "unabridged"
+    genres: List[Genre]  # may be an empty list
     image_url: str
     language: str
     narrators: List[Narrator]
     publisher: str
-    release_date: str # yyyy-mm-dd format
+    release_date: str  # yyyy-mm-dd format
     runtime_length_min: int
     series: Optional[Series]
     subtitle: Optional[str]
     summary_html: str
     summary_markdown: str
-    tags: List[Tag] # may be an empty list
+    tags: List[Tag]  # may be an empty list
     title: str
 
-    def __init__(self, asin, authors, description, format_type, genres, image_url, language, narrators, publisher, release_date, runtime_length_min, series, subtitle, summary_html, summary_markdown, tags, title):
+    def __init__(
+            self,
+            asin,
+            authors,
+            description,
+            format_type,
+            genres,
+            image_url,
+            language,
+            narrators,
+            publisher,
+            release_date,
+            runtime_length_min,
+            series,
+            subtitle,
+            summary_html,
+            summary_markdown,
+            tags,
+            title):
         self.asin = asin
         self.authors = authors
         self.description = description
@@ -89,11 +118,11 @@ class Book:
         """
         Creates a `Book` from an Audnex book result
         """
-        series_primary=b.get("seriesPrimary")
+        series_primary = b.get("seriesPrimary")
         if series_primary:
             pos = series_primary.get("position")
             if pos:
-                match = re.search(r"[\d\.\-]+", pos)
+                match = re.search(r"[\d.\-]+", pos)
                 series_position = match.group(0) if match else None
             else:
                 series_position = None
@@ -119,7 +148,7 @@ class Book:
             language=b["language"],
             narrators=[Narrator(name=n["name"]) for n in b["narrators"]],
             publisher=b["publisherName"],
-            release_date=b["releaseDate"][:10], # ignore timestamp from iso8601 string
+            release_date=b["releaseDate"][:10],  # ignore timestamp from iso8601 string
             runtime_length_min=b["runtimeLengthMin"],
             series=series,
             subtitle=b.get("subtitle"),
@@ -131,17 +160,20 @@ class Book:
             ],
             title=b["title"],
         )
-    
+
+
 class Chapter:
     length_ms: int
     start_offset_ms: int
     start_offset_sec: int
     title: str
+
     def __init__(self, length_ms, start_offset_ms, start_offset_sec, title):
         self.length_ms = length_ms
         self.start_offset_ms = start_offset_ms
         self.start_offset_sec = start_offset_sec
         self.title = title
+
 
 class BookChapters:
     asin: str
@@ -152,7 +184,15 @@ class BookChapters:
     runtime_length_ms: int
     runtime_length_sec: int
 
-    def __init__(self, asin, bran_intro_duration_ms, brand_outro_duration_ms, chapters, is_accurate, runtime_length_ms, runtime_length_sec):
+    def __init__(
+            self,
+            asin,
+            bran_intro_duration_ms,
+            brand_outro_duration_ms,
+            chapters,
+            is_accurate,
+            runtime_length_ms,
+            runtime_length_sec):
         self.asin = asin
         self.bran_intro_duration_ms = bran_intro_duration_ms
         self.brand_outro_duration_ms = brand_outro_duration_ms
@@ -160,7 +200,7 @@ class BookChapters:
         self.is_accurate = is_accurate
         self.runtime_length_ms = runtime_length_ms
         self.runtime_length_sec = runtime_length_sec
-    
+
     @staticmethod
     def from_audnex_chapter_info(c: Dict):
         """
@@ -178,4 +218,3 @@ class BookChapters:
             runtime_length_ms=c["runtimeLengthMs"],
             runtime_length_sec=c["runtimeLengthSec"],
         )
-    
