@@ -1,4 +1,5 @@
 from typing import Dict
+from xml.etree.ElementTree import Element
 
 from .api import search_goodreads
 
@@ -24,7 +25,7 @@ def get_original_date(self, asin: str, authors: str, title: str) -> Dict:
     return original_date
 
 
-def goodreads_get_best_match(self, response: Dict, author: str, title: str) -> Dict:
+def goodreads_get_best_match(self, response: Element, author: str, title: str) -> Element:
     # returns best matching work from results
     author_cleaned = author.replace(" ", "")
     # get all works
@@ -46,11 +47,11 @@ def goodreads_get_best_match(self, response: Dict, author: str, title: str) -> D
             return work
 
 
-def goodreads_get_total_result(response: Dict) -> int:
+def goodreads_get_total_result(response: Element) -> int:
     return int(response.findtext("./search/total-results"))
 
 
-def parse_original_date(work: Dict) -> Dict:
+def parse_original_date(work: Element) -> Dict:
     original_date = {}
     if work is not None:
         year = work.findtext("original_publication_year")
