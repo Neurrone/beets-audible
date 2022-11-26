@@ -26,7 +26,7 @@ def search_audible(keywords: str) -> Dict:
     return response
 
 
-def search_goodreads(api_key: str, keywords: str) -> Dict:
+def search_goodreads(api_key: str, keywords: str) -> ET.Element:
     params = {
         "key": api_key,
         "q": keywords
@@ -44,7 +44,7 @@ def get_book_info(asin: str) -> Tuple[Book, BookChapters]:
     return book, book_chapters
 
 
-def make_request(url):
+def make_request(url: str) -> bytes:
     """Makes a request to the specified url and returns received response
     The request will be retried up to 3 times in case of failure.
     """
