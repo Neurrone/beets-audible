@@ -10,8 +10,10 @@ from .book import Book, BookChapters
 AUDIBLE_ENDPOINT = "https://api.audible.com/1.0/catalog/products"
 AUDNEX_ENDPOINT = "https://api.audnex.us"
 GOODREADS_ENDPOINT = "https://www.goodreads.com/search/index.xml"
-USER_AGENT = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/" \
-             "35.0.1916.47 Safari/537.36"
+USER_AGENT = (
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/"
+    "35.0.1916.47 Safari/537.36"
+)
 
 
 def search_audible(keywords: str) -> Dict:
@@ -19,7 +21,7 @@ def search_audible(keywords: str) -> Dict:
         "response_groups": "contributors,product_attrs,product_desc,product_extended_attrs,series",
         "num_results": 10,
         "products_sort_by": "Relevance",
-        "keywords": keywords
+        "keywords": keywords,
     }
     query = parse.urlencode(params)
     response = json.loads(make_request(f"{AUDIBLE_ENDPOINT}?{query}"))
@@ -27,10 +29,7 @@ def search_audible(keywords: str) -> Dict:
 
 
 def search_goodreads(api_key: str, keywords: str) -> ET.Element:
-    params = {
-        "key": api_key,
-        "q": keywords
-    }
+    params = {"key": api_key, "q": keywords}
     query = parse.urlencode(params)
     url = f"{GOODREADS_ENDPOINT}?{query}"
     return ET.fromstring(make_request(url))
@@ -52,10 +51,13 @@ def make_request(url: str) -> bytes:
     sleep_time = 2
     for n in range(0, num_retries):
         try:
-            req = request.Request(url, headers={
-                # Circumvent audnex's user-agent blocking
-                'User-Agent': USER_AGENT,
-            })
+            req = request.Request(
+                url,
+                headers={
+                    # Circumvent audnex's user-agent blocking
+                    "User-Agent": USER_AGENT,
+                },
+            )
             with request.urlopen(req) as response:
                 return response.read()
         except HTTPError as e:

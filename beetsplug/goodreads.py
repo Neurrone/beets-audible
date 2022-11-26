@@ -5,7 +5,7 @@ from .api import search_goodreads
 
 
 def get_original_date(self, asin: str, authors: str, title: str) -> Dict:
-    api_key = self.config['goodreads_apikey']
+    api_key = self.config["goodreads_apikey"]
     goodreads_response = search_goodreads(api_key, asin)
     totalresults = goodreads_get_total_result(goodreads_response)
 
@@ -30,15 +30,15 @@ def goodreads_get_best_match(self, response: Element, author: str, title: str) -
     author_cleaned = author.replace(" ", "")
     # get all works
     for work in response.findall("./search/results/work"):
-        best_book = work.find('best_book')
+        best_book = work.find("best_book")
 
         # remove anything after parenthesis, this is where GR puts series and other non title info
-        gr_title = best_book.find('title').text
-        gr_title_cleaned = gr_title.split('(')[0].strip()
+        gr_title = best_book.find("title").text
+        gr_title_cleaned = gr_title.split("(")[0].strip()
 
         # remove all spaces from author name. Audible can have names like James S.
         # A. Corey, GR might have James S.A. Corey
-        gr_author = best_book.find('author/name').text
+        gr_author = best_book.find("author/name").text
         gr_author_cleaned = gr_author.replace(" ", "").strip()
 
         # confirm author and titles
