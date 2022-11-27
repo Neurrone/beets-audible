@@ -1,0 +1,192 @@
+[[package]]
+name = "beautifulsoup4"
+version = "4.11.1"
+description = "Screen-scraping library"
+category = "main"
+optional = false
+python-versions = ">=3.6.0"
+
+[package.dependencies]
+soupsieve = ">1.2"
+
+[package.extras]
+html5lib = ["html5lib"]
+lxml = ["lxml"]
+
+[[package]]
+name = "beets"
+version = "1.6.0"
+description = "music tagger and library organizer"
+category = "dev"
+optional = false
+python-versions = "*"
+
+[package.dependencies]
+confuse = ">=1.0.0"
+jellyfish = "*"
+mediafile = ">=0.2.0"
+munkres = ">=1.0.0"
+musicbrainzngs = ">=0.4"
+pyyaml = "*"
+unidecode = "*"
+
+[package.extras]
+absubmit = ["requests"]
+beatport = ["requests-oauthlib (>=0.6.1)"]
+bpd = ["pygobject"]
+chroma = ["pyacoustid"]
+discogs = ["python3-discogs-client (>=2.3.10)"]
+embedart = ["pillow"]
+embyupdate = ["requests"]
+fetchart = ["requests", "pillow"]
+import = ["rarfile", "py7zr"]
+kodiupdate = ["requests"]
+lastgenre = ["pylast"]
+lastimport = ["pylast"]
+lint = ["flake8", "flake8-docstrings", "pep8-naming"]
+lyrics = ["requests", "beautifulsoup4", "langdetect"]
+metasync = ["dbus-python"]
+mpdstats = ["python-mpd2 (>=0.4.2)"]
+plexupdate = ["requests"]
+reflink = ["reflink"]
+replaygain = ["pygobject"]
+scrub = ["mutagen (>=1.33)"]
+sonosupdate = ["soco"]
+test = ["beautifulsoup4", "coverage", "flask", "mock", "pylast", "pytest", "python-mpd2", "pyxdg", "responses (>=0.3.0)", "requests-oauthlib", "reflink", "rarfile", "python3-discogs-client", "py7zr"]
+thumbnails = ["pyxdg", "pillow"]
+web = ["flask", "flask-cors"]
+
+[[package]]
+name = "confuse"
+version = "2.0.0"
+description = "Painless YAML configuration."
+category = "dev"
+optional = false
+python-versions = ">=3.6, <4"
+
+[package.dependencies]
+pyyaml = "*"
+
+[[package]]
+name = "jellyfish"
+version = "0.8.9"
+description = "a library for doing approximate and phonetic matching of strings."
+category = "dev"
+optional = false
+python-versions = ">3.5"
+
+[[package]]
+name = "markdownify"
+version = "0.11.6"
+description = "Convert HTML to markdown."
+category = "main"
+optional = false
+python-versions = "*"
+
+[package.dependencies]
+beautifulsoup4 = ">=4.9,<5"
+six = ">=1.15,<2"
+
+[[package]]
+name = "mediafile"
+version = "0.10.0"
+description = "Handles low-level interfacing for files' tags. Wraps Mutagen to"
+category = "dev"
+optional = false
+python-versions = ">=3.6"
+
+[package.dependencies]
+mutagen = ">=1.45"
+six = ">=1.9"
+
+[package.extras]
+test = ["tox"]
+
+[[package]]
+name = "munkres"
+version = "1.1.4"
+description = "Munkres (Hungarian) algorithm for the Assignment Problem"
+category = "dev"
+optional = false
+python-versions = "*"
+
+[[package]]
+name = "musicbrainzngs"
+version = "0.7.1"
+description = "Python bindings for the MusicBrainz NGS and the Cover Art Archive webservices"
+category = "dev"
+optional = false
+python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
+
+[[package]]
+name = "mutagen"
+version = "1.45.1"
+description = "read and write audio tags for many formats"
+category = "dev"
+optional = false
+python-versions = ">=3.5, <4"
+
+[[package]]
+name = "natsort"
+version = "8.2.0"
+description = "Simple yet flexible natural sorting in Python."
+category = "main"
+optional = false
+python-versions = ">=3.6"
+
+[package.extras]
+fast = ["fastnumbers (>=2.0.0)"]
+icu = ["PyICU (>=1.0.0)"]
+
+[[package]]
+name = "pyyaml"
+version = "6.0"
+description = "YAML parser and emitter for Python"
+category = "dev"
+optional = false
+python-versions = ">=3.6"
+
+[[package]]
+name = "six"
+version = "1.16.0"
+description = "Python 2 and 3 compatibility utilities"
+category = "main"
+optional = false
+python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*"
+
+[[package]]
+name = "soupsieve"
+version = "2.3.2.post1"
+description = "A modern CSS selector implementation for Beautiful Soup."
+category = "main"
+optional = false
+python-versions = ">=3.6"
+
+[[package]]
+name = "unidecode"
+version = "1.3.6"
+description = "ASCII transliterations of Unicode text"
+category = "dev"
+optional = false
+python-versions = ">=3.5"
+
+[metadata]
+lock-version = "1.1"
+python-versions = "^3.6"
+content-hash = "0e4d88526a8fce880686edb639017d6850b56e38da622c946ea8e2430f6a5f93"
+
+[metadata.files]
+beautifulsoup4 = []
+beets = []
+confuse = []
+jellyfish = []
+markdownify = []
+mediafile = []
+munkres = []
+musicbrainzngs = []
+mutagen = []
+natsort = []
+pyyaml = []
+six = []
+soupsieve = []
+unidecode = []

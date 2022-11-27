@@ -1,0 +1,22 @@
+[tool.poetry]
+name = "beets-audible"
+version = "0.1.0"
+description = "Beets plugin for audiobook management"
+authors = ["Dickson Tan <dickson.tan.2013@gmail.com>"]
+keywords = ["beets", "audible"]
+license = "MIT"
+readme = "readme.md"
+repository = "https://github.com/Neurrone/beets-audible"
+packages = [{ include = "beetsplug" }]
+
+[tool.poetry.dependencies]
+python = "^3.6"
+markdownify = "0.11.6"
+natsort = "8.2.0"
+
+[tool.poetry.dev-dependencies]
+beets = "1.6.0"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
