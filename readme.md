@@ -14,14 +14,13 @@ This Beets plugin solves both problems.
 
 ## Installation
 
-1. Clone this repository.
-2. Install dependencies via pip: `pip install markdownify natsort beets-copyartifacts3` (copyartifacts is optional). See the next section instead if you're running Beets in Docker (highly recommended as it makes it easier to maintain a separate Beets installation dedicated to audiobooks).
-3. Use a separate beets config and database for managing audiobooks. This is the recommended Beets config for this plugin:
+1. Install via pip: `pip install beets-audible beets-copyartifacts3` (copyartifacts is optional but recommended). See the next section instead if you're running Beets in Docker (highly recommended as it makes it easier to maintain a separate Beets installation dedicated to audiobooks).
+2. Use a separate beets config and database for managing audiobooks. This is the recommended Beets config for this plugin:
 
    ```yaml
    # add audible to the list of plugins
    # copyartifacts is optional but recommended if you're manually specifying metadata via metadata.yml, see the "Importing non-audible content" section
-   plugins: copyartifacts edit fromfilename scrub audible
+   plugins: audible copyartifacts edit fromfilename scrub
 
    directory: /audiobooks
 
@@ -41,9 +40,6 @@ This Beets plugin solves both problems.
    musicbrainz:
      enabled: no
 
-   pluginpath:
-     - /plugins/audible # point this to the directory which contains audible.py
-
    audible:
      # if the number of files in the book is the same as the number of chapters from Audible,
      # attempt to match each file to an audible chapter
@@ -61,7 +57,7 @@ This Beets plugin solves both problems.
      auto: yes # optional, enabling this is personal preference
    ```
 
-4. Run the `beet --version` command and verify that the audible plugin appears in the list of plugins.
+3. Run the `beet --version` command and verify that the audible plugin appears in the list of plugins.
 
 ### With Docker
 
@@ -70,7 +66,6 @@ This Beets plugin solves both problems.
    ```
    beets
      config/
-     plugins/
      scripts/
        install-deps.sh # see step 3
      docker-compose.yml # see step 2
@@ -92,7 +87,6 @@ This Beets plugin solves both problems.
          - TZ=Asia/Singapore
        volumes:
          - ./config:/config
-         - ./plugins:/plugins
          - ./scripts:/config/custom-cont-init.d
          - /path/to/audiobooks:/audiobooks
          - /path/to/import/books/from:/input
@@ -105,19 +99,18 @@ This Beets plugin solves both problems.
    #!/bin/bash
    echo "Installing dependencies..."
    # copyartifacts is optional but recommended
-   pip install --no-cache-dir markdownify natsort beets-copyartifacts3
+   pip install --no-cache-dir beets-audible beets-copyartifacts3
    ```
 
-4. Clone this repository into the `plugins` folder.
-5. Spin up the container: `docker-compose up -d`
-6. Update the config in `config/config.yaml` as described above.
-7. Run the `beet --version` command and verify that the audible plugin appears in the list of plugins.
+4. Spin up the container: `docker-compose up -d`
+5. Update the config in `config/config.yaml` as described above.
+6. In the docker container, run the `beet --version` command and verify that the audible plugin appears in the list of plugins.
 
 ## Usage
 
 When importing audiobooks into Beets, ensure that the files for each book are in its own folder, even if the audiobook only consists of a single file. This is so that the files for a book are treated as an album by Beets. Avoid putting files from multiple books in the same folder.
 
-When ready, start the import with the following command:
+When ready, start the import by executing the following command in the container:
 
 ```sh
 beet import /path/to/audiobooks
@@ -148,7 +141,6 @@ The plugin can search Goodreads to find the original publication date of the wor
 ```
 
 If you want this date used as the release date for the audiobook, you must set [original_date](https://beets.readthedocs.io/en/stable/reference/config.html#original-date) to yes in your beets config
-
 
 ### Importing Non-Audible Content
 
