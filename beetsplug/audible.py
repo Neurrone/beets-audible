@@ -16,6 +16,11 @@ from .api import get_book_info, make_request, search_audible
 from .goodreads import get_original_date
 
 
+def sort_items(items):
+    naturally_sorted_items = os_sorted(items, key=lambda i: util.bytestring_path(i.path))
+    return naturally_sorted_items
+
+
 class Audible(BeetsPlugin):
     data_source = "Audible"
 
@@ -187,7 +192,7 @@ class Audible(BeetsPlugin):
                 # This does work correctly when the album has multiple disks
                 # using the bytestring_path function from Beets is needed for correctness
                 # I was noticing inaccurate sorting if using str to convert paths to strings
-                naturally_sorted_items = os_sorted(items, key=lambda i: util.bytestring_path(i.path))
+                naturally_sorted_items = sort_items(items)
                 a.tracks = [
                     TrackInfo(**common_track_attributes, title=item.title, length=item.length, index=i + 1)
                     for i, item in enumerate(naturally_sorted_items)
@@ -237,7 +242,7 @@ class Audible(BeetsPlugin):
             "subtitle": subtitle,
         }
 
-        naturally_sorted_items = os_sorted(items, key=lambda i: util.bytestring_path(i.path))
+        naturally_sorted_items = sort_items(items)
         # populate tracks by using some of the info from the files being imported
         tracks = [
             TrackInfo(
