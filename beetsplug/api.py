@@ -5,6 +5,8 @@ from typing import Dict, Tuple
 from urllib import parse, request
 from urllib.error import HTTPError
 
+import requests
+
 from .book import Book, BookChapters
 
 AUDIBLE_ENDPOINT = "https://api.audible.com/1.0/catalog/products"
@@ -36,11 +38,16 @@ def search_goodreads(api_key: str, keywords: str) -> ET.Element:
 
 
 def get_book_info(asin: str) -> Tuple[Book, BookChapters]:
-    book_response = json.loads(make_request(f"{AUDNEX_ENDPOINT}/books/{asin}"))
-    chapter_response = json.loads(make_request(f"{AUDNEX_ENDPOINT}/books/{asin}/chapters"))
+    book_response, chapter_response = call_audnex_for_book_info(asin)
     book = Book.from_audnex_book(book_response)
     book_chapters = BookChapters.from_audnex_chapter_info(chapter_response)
     return book, book_chapters
+
+
+def call_audnex_for_book_info(asin: str) -> Tuple[Dict, Dict]:
+    book_response = json.loads(make_request(f"{AUDNEX_ENDPOINT}/books/{asin}"))
+    chapter_response = json.loads(make_request(f"{AUDNEX_ENDPOINT}/books/{asin}/chapters"))
+    return book_response, chapter_response
 
 
 def make_request(url: str) -> bytes:
