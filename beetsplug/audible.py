@@ -4,11 +4,13 @@ import pathlib
 import re
 import urllib.error
 from tempfile import NamedTemporaryFile
+from typing import List
 
 import mediafile
 import yaml
 from beets import importer, util
 from beets.autotag.hooks import AlbumInfo, TrackInfo
+from beets.library import Item
 from beets.plugins import BeetsPlugin, get_distance
 from natsort import natsorted
 
@@ -16,7 +18,7 @@ from .api import get_book_info, make_request, search_audible
 from .goodreads import get_original_date
 
 
-def sort_items(items):
+def sort_items(items: List[Item]):
     naturally_sorted_items = natsorted(items, key=lambda i: i.title)
     return naturally_sorted_items
 
