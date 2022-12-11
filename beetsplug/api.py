@@ -5,8 +5,6 @@ from typing import Dict, Tuple
 from urllib import parse, request
 from urllib.error import HTTPError
 
-import requests
-
 from .book import Book, BookChapters
 
 AUDIBLE_ENDPOINT = "https://api.audible.com/1.0/catalog/products"
