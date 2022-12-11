@@ -47,6 +47,18 @@ chapter_lists = (
         create_mock_item("13", 0),
     ],
     [
+        create_mock_item("Chapter 1", 0),
+        create_mock_item("Chapter 2", 0),
+        create_mock_item("Chapter 3", 0),
+        create_mock_item("Chapter 4", 0),
+        create_mock_item("Chapter 5", 0),
+        create_mock_item("Chapter 6", 0),
+        create_mock_item("Chapter 7", 0),
+        create_mock_item("Chapter 8", 0),
+        create_mock_item("Chapter 9", 0),
+        create_mock_item("Chapter 10", 0),
+    ],
+    [
         create_mock_item("Chapter 01", 0),
         create_mock_item("Chapter 02", 0),
         create_mock_item("Chapter 03", 0),
@@ -119,6 +131,21 @@ chapter_lists = (
             "Chapter 13 The Trials of a Teenager The Untold Story of the DC Sniper Investigation - 1.m4b", 0
         ),
         create_mock_item("Chapter 14 Last Words The Untold Story of the DC Sniper Investigation - 1.m4b", 0),
+    ],
+    [
+        create_mock_item("Prologue", 0),
+        create_mock_item("Chapter 1", 0),
+        create_mock_item("Chapter 2", 0),
+        create_mock_item("Chapter 3", 0),
+        create_mock_item("Chapter 4", 0),
+        create_mock_item("Chapter 5", 0),
+        create_mock_item("Chapter 6", 0),
+        create_mock_item("Chapter 7", 0),
+        create_mock_item("Chapter 8", 0),
+        create_mock_item("Chapter 9", 0),
+        create_mock_item("Chapter 10", 0),
+        create_mock_item("End", 0),
+        create_mock_item("Author's Note", 0),
     ],
 )
 
