@@ -6,6 +6,7 @@ from unittest.mock import MagicMock
 
 import pytest
 from beets.library import Item
+from beets.util import bytestring_path
 
 import beetsplug.audible as audible
 
@@ -14,17 +15,18 @@ def create_mock_item(item_name: str, item_index: int, filename: Optional[str] = 
     out = MagicMock()
     out.item_name = item_name
     out.track = item_index
-    out.path = bytes(Path(".", "test_audiobook", filename if filename else item_name + ".mp3").resolve())
+    out.path = bytestring_path(str(Path(".", "test_audiobook", filename if filename else item_name + ".mp3").resolve()))
     out.__str__.return_value = f"{item_name} {out.path}"
     return out
 
 
-def randomise_lists(lists: Tuple[List, ...], n: int = 5) -> Sequence[List]:
+def randomise_lists(lists: Tuple[List, ...], n: int = 5) -> Sequence[Tuple[List, List]]:
     out = []
     for l in lists:
         for i in range(1, n):
-            shuffle(l)
-            out.append(deepcopy(l))
+            copy = deepcopy(l)
+            shuffle(copy)
+            out.append((l, copy))
     return out
 
 
@@ -100,6 +102,24 @@ chapter_lists = (
         create_mock_item("Mediocre-Part11", 0),
         create_mock_item("Mediocre-Part12", 0),
     ],
+    [
+        create_mock_item("Chapter 1 The DC Sniper The Untold Story of the DC Sniper Investigation - 1.m4b", 0),
+        create_mock_item("Chapter 2 Terrorism The Untold Story of the DC Sniper Investigation - 1.m4b", 0),
+        create_mock_item("Chapter 3 Brothers in the Arena The Untold Story of the DC Sniper Investigation - 1.m4b", 0),
+        create_mock_item("Chapter 4 Call Me God The Untold Story of the DC Sniper Investigation - 1.m4b", 0),
+        create_mock_item("Chapter 5 Close to Home The Untold Story of the DC Sniper Investigation - 1.m4b", 0),
+        create_mock_item("Chapter 6 A Local Case The Untold Story of the DC Sniper Investigation - 1.m4b", 0),
+        create_mock_item("Chapter 7 Demands The Untold Story of the DC Sniper Investigation - 1.m4b", 0),
+        create_mock_item("Chapter 8 The Profile The Untold Story of the DC Sniper Investigation - 1.m4b", 0),
+        create_mock_item("Chapter 9 Suspects The Untold Story of the DC Sniper Investigation - 1.m4b", 0),
+        create_mock_item("Chapter 10 Prelude The Untold Story of the DC Sniper Investigation - 1.m4b", 0),
+        create_mock_item("Chapter 11 The Arrest The Untold Story of the DC Sniper Investigation - 1.m4b", 0),
+        create_mock_item("Chapter 12 Revenge The Untold Story of the DC Sniper Investigation - 1.m4b", 0),
+        create_mock_item(
+            "Chapter 13 The Trials of a Teenager The Untold Story of the DC Sniper Investigation - 1.m4b", 0
+        ),
+        create_mock_item("Chapter 14 Last Words The Untold Story of the DC Sniper Investigation - 1.m4b", 0),
+    ],
 )
 
 
@@ -107,18 +127,17 @@ chapter_lists = (
 def test_sort_items(items: List[Item]):
     expected = deepcopy(items)
     result = audible.sort_items(items)
-    assert [str(result[i]) == str(e) for i, e in enumerate(expected)]
+    assert all([str(result[i]) == str(e) for i, e in enumerate(expected)])
 
 
 @pytest.mark.parametrize("items", chapter_lists)
 def test_sort_items_reversed(items: List[Item]):
     expected = deepcopy(items)
     result = audible.sort_items(reversed(items))
-    assert [str(result[i]) == str(e) for i, e in enumerate(expected)]
+    assert all([str(result[i]) == str(e) for i, e in enumerate(expected)])
 
 
-@pytest.mark.parametrize("items", randomise_lists(chapter_lists, 10))
-def test_sort_items_randomised(items: List[Item]):
-    expected = deepcopy(items)
+@pytest.mark.parametrize("correct, items", randomise_lists(chapter_lists, 10))
+def test_sort_items_randomised(correct: List[Item], items: List[Item]):
     result = audible.sort_items(items)
-    assert [str(result[i]) == str(e) for i, e in enumerate(expected)]
+    assert all([str(result[i]) == str(e) for i, e in enumerate(correct)])
