@@ -10,7 +10,7 @@ import yaml
 from beets import importer, util
 from beets.autotag.hooks import AlbumInfo, TrackInfo
 from beets.plugins import BeetsPlugin, get_distance
-from natsort import os_sorted
+from natsort import natsorted
 
 from .api import get_book_info, make_request, search_audible
 from .goodreads import get_original_date
