@@ -13,7 +13,7 @@ import beetsplug.audible as audible
 
 def create_mock_item(item_name: str, item_index: int, filename: Optional[str] = None) -> MagicMock:
     out = MagicMock()
-    out.item_name = item_name
+    out.title = item_name
     out.track = item_index
     out.path = bytestring_path(str(Path(".", "test_audiobook", filename if filename else item_name + ".mp3").resolve()))
     out.__str__.return_value = f"{item_name} {out.path}"

@@ -17,7 +17,7 @@ from .goodreads import get_original_date
 
 
 def sort_items(items):
-    naturally_sorted_items = os_sorted(items, key=lambda i: util.bytestring_path(i.path))
+    naturally_sorted_items = natsorted(items, key=lambda i: i.title)
     return naturally_sorted_items
 
 
