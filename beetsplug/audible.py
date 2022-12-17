@@ -34,17 +34,10 @@ def get_common_data_attributes(track: TrackInfo) -> Dict:
     return common_track_attributes
 
 
-def normalised_track_indices(tracks: List[TrackInfo]) -> List[TrackInfo]:
-    tracks = sorted(tracks, key=lambda t: t.index)
-    for i, track in enumerate(tracks):
-        track.index = i
-    return tracks
-
-
 def convert_items_to_trackinfo(items: List[Item], common_attrs: Dict) -> List[TrackInfo]:
     out = []
     for i, item in enumerate(items, start=1):
-        track = TrackInfo(**common_attrs, title=item.title, length=item.length, index=i + 1)
+        track = TrackInfo(**common_attrs, title=item.title, length=item.length, index=i)
         out.append(track)
     return out
 
