@@ -46,7 +46,11 @@ def sort_tracks(album: AlbumInfo, items: List[Item]) -> List[TrackInfo]:
     common_attrs = get_common_data_attributes(album.tracks[0])
     # if there's only one item, return as is
     if len(items) == 1:
-        matches = items
+        # Prefer a sdingle named book from the remote source
+        if len(album.tracks) == 1:
+            matches = album.tracks
+        else:
+            matches = items
     else:
         affixes = find_regular_affixes([c.title for c in items])
         stripped_titles = [strip_affixes(i.title, affixes) for i in items]
@@ -61,6 +65,7 @@ def sort_tracks(album: AlbumInfo, items: List[Item]) -> List[TrackInfo]:
                 # if the number of chapters are the same, then it's likely that they are mislabelled but correlate
                 return album.tracks
             else:
+                # otherwise a natural sort to make sure it's all sorted correctly
                 matches = natsorted(items, key=lambda t: t.title)
         else:
             all_remote_chapters: List = deepcopy(album.tracks)
