@@ -26,6 +26,51 @@ def sort_items(items: List[Item]):
     return naturally_sorted_items
 
 
+def sort_tracks(album: AlbumInfo, items: List[Item]) -> List[Item]:
+    # if there's only one item, return as is
+    if len(items) == 1:
+        return items
+
+    affixes = find_regular_affixes([c.title for c in items])
+    stripped_titles = [strip_affixes(i.title, affixes) for i in items]
+    average_title_change = calculate_average_levenshtein_difference(stripped_titles)
+
+    # if there are only a few track differences from each to the other, it's likely they're numbered and don't have
+    # otherwise unique titles, so just sort them as best as possible
+
+    # magic number here, it's a judgement call
+    if max(average_title_change) < 4:
+        if len(items) == len(album.tracks):
+            # if the number of chapters are the same, then it's likely that they are mislabelled but correlate
+            return album.tracks
+        else:
+            matches = natsorted(items, key=lambda t: t.title)
+    else:
+        all_remote_chapters: List = deepcopy(album.tracks)
+        matches = []
+        for chapter in items:
+            #  need a string distance algorithm that penalises number replacements more
+            best_match = list(
+                sorted(all_remote_chapters, key=lambda c: specialised_levenshtein(chapter.title, c.title, affixes))
+            )
+            best_match = best_match[0]
+            matches.append(best_match)
+            all_remote_chapters.remove(best_match)
+    tracks = normalised_track_indices(matches)
+    return tracks
+
+
+def calculate_average_levenshtein_difference(tokens: List[str]) -> List[float]:
+    out = []
+    for token in tokens:
+        temp = []
+        for other in tokens:
+            temp.append(Levenshtein.distance(token, other))
+        num = len(tokens) - 1
+        out.append(sum(temp) / num)
+    return out
+
+
 def find_regular_affixes(example_strings: List[str]) -> Tuple[str, str]:
     if len(example_strings) <= 1:
         return "", ""
@@ -80,7 +125,7 @@ def specialised_levenshtein(token1: str, token2: str, ignored_affixes: Optional[
 
 
 def normalised_track_indices(tracks: List[Item]) -> List[Item]:
-    tracks = sorted(tracks, key=lambda t: t.index)
+    tracks = sorted(tracks, key=lambda t: t.track)
     for i, track in enumerate(tracks):
         track.index = i
     return tracks
@@ -253,21 +298,7 @@ class Audible(BeetsPlugin):
                 del common_track_attributes["length"]
                 del common_track_attributes["title"]
 
-                all_remote_chapters: List = deepcopy(a.tracks)
-                matches = []
-                affixes = find_regular_affixes([c.title for c in items])
-                for chapter in items:
-                    #  need a string distance algorithm that penalises number replacements more
-                    best_match = list(
-                        sorted(
-                            all_remote_chapters,
-                            key=lambda c: specialised_levenshtein(chapter.title, c.title, affixes)
-                        )
-                    )
-                    best_match = best_match[0]
-                    matches.append(best_match)
-                    all_remote_chapters.remove(best_match)
-                a.tracks = normalised_track_indices(matches)
+                a.tracks = sort_tracks(a, items)
         return albums
 
     def get_album_from_yaml_metadata(self, data, items):

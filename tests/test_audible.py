@@ -218,10 +218,10 @@ def test_find_regular_affixes(test_tokens: List[str], expected_prefix: str, expe
         ("example", ("", ""), "example"),
         ("test", ("test", ""), ""),
         ("test", ("", "test"), ""),
-        ('testexampletest',('test',''), 'exampletest'),
-        ('testexampletest', ('','test'), 'testexample'),
-        ('test.mp3', ('','.mp3'), 'test'),
-        ('testxmp3',('','.mp3'), 'testxmp3'),
+        ("testexampletest", ("test", ""), "exampletest"),
+        ("testexampletest", ("", "test"), "testexample"),
+        ("test.mp3", ("", ".mp3"), "test"),
+        ("testxmp3", ("", ".mp3"), "testxmp3"),
     ),
 )
 def test_strip_affixes(test_token: str, test_affixes: Tuple[str, str], expected: str):
