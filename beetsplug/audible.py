@@ -26,8 +26,8 @@ def sort_items(items: List[Item]):
     return naturally_sorted_items
 
 
-def get_common_data_attributes(item: Item) -> Dict:
-    common_track_attributes = dict(item)
+def get_common_data_attributes(track: TrackInfo) -> Dict:
+    common_track_attributes = dict(track)
     del common_track_attributes["index"]
     del common_track_attributes["length"]
     del common_track_attributes["title"]
@@ -41,9 +41,8 @@ def normalised_track_indices(tracks: List[TrackInfo]) -> List[TrackInfo]:
     return tracks
 
 
-def convert_items_to_trackinfo(items: List[Item]) -> List[TrackInfo]:
+def convert_items_to_trackinfo(items: List[Item], common_attrs: Dict) -> List[TrackInfo]:
     out = []
-    common_attrs = get_common_data_attributes(items[0])
     for i, item in enumerate(items, start=1):
         track = TrackInfo(**common_attrs, title=item.title, length=item.length, index=i + 1)
         out.append(track)
@@ -51,6 +50,7 @@ def convert_items_to_trackinfo(items: List[Item]) -> List[TrackInfo]:
 
 
 def sort_tracks(album: AlbumInfo, items: List[Item]) -> List[TrackInfo]:
+    common_attrs = get_common_data_attributes(album.tracks[0])
     # if there's only one item, return as is
     if len(items) == 1:
         matches = items
@@ -80,7 +80,7 @@ def sort_tracks(album: AlbumInfo, items: List[Item]) -> List[TrackInfo]:
                 best_match = best_match[0]
                 matches.append(best_match)
                 all_remote_chapters.remove(best_match)
-    tracks = convert_items_to_trackinfo(matches)
+    tracks = convert_items_to_trackinfo(matches, common_attrs)
     return tracks
 
 
