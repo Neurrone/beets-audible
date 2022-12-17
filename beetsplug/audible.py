@@ -5,7 +5,7 @@ import re
 import urllib.error
 from copy import deepcopy
 from tempfile import NamedTemporaryFile
-from typing import List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple
 
 import beets.autotag.hooks
 import Levenshtein
@@ -26,37 +26,61 @@ def sort_items(items: List[Item]):
     return naturally_sorted_items
 
 
-def sort_tracks(album: AlbumInfo, items: List[Item]) -> List[Item]:
+def get_common_data_attributes(item: Item) -> Dict:
+    common_track_attributes = dict(item)
+    del common_track_attributes["index"]
+    del common_track_attributes["length"]
+    del common_track_attributes["title"]
+    return common_track_attributes
+
+
+def normalised_track_indices(tracks: List[TrackInfo]) -> List[TrackInfo]:
+    tracks = sorted(tracks, key=lambda t: t.index)
+    for i, track in enumerate(tracks):
+        track.index = i
+    return tracks
+
+
+def convert_items_to_trackinfo(items: List[Item]) -> List[TrackInfo]:
+    out = []
+    common_attrs = get_common_data_attributes(items[0])
+    for i, item in enumerate(items, start=1):
+        track = TrackInfo(**common_attrs, title=item.title, length=item.length, index=i + 1)
+        out.append(track)
+    return out
+
+
+def sort_tracks(album: AlbumInfo, items: List[Item]) -> List[TrackInfo]:
     # if there's only one item, return as is
     if len(items) == 1:
-        return items
-
-    affixes = find_regular_affixes([c.title for c in items])
-    stripped_titles = [strip_affixes(i.title, affixes) for i in items]
-    average_title_change = calculate_average_levenshtein_difference(stripped_titles)
-
-    # if there are only a few track differences from each to the other, it's likely they're numbered and don't have
-    # otherwise unique titles, so just sort them as best as possible
-
-    # magic number here, it's a judgement call
-    if max(average_title_change) < 4:
-        if len(items) == len(album.tracks):
-            # if the number of chapters are the same, then it's likely that they are mislabelled but correlate
-            return album.tracks
-        else:
-            matches = natsorted(items, key=lambda t: t.title)
+        matches = items
     else:
-        all_remote_chapters: List = deepcopy(album.tracks)
-        matches = []
-        for chapter in items:
-            #  need a string distance algorithm that penalises number replacements more
-            best_match = list(
-                sorted(all_remote_chapters, key=lambda c: specialised_levenshtein(chapter.title, c.title, affixes))
-            )
-            best_match = best_match[0]
-            matches.append(best_match)
-            all_remote_chapters.remove(best_match)
-    tracks = normalised_track_indices(matches)
+        affixes = find_regular_affixes([c.title for c in items])
+        stripped_titles = [strip_affixes(i.title, affixes) for i in items]
+        average_title_change = calculate_average_levenshtein_difference(stripped_titles)
+
+        # if there are only a few track differences from each to the other, it's likely they're numbered and don't have
+        # otherwise unique titles, so just sort them as best as possible
+
+        # magic number here, it's a judgement call
+        if max(average_title_change) < 4:
+            if len(items) == len(album.tracks):
+                # if the number of chapters are the same, then it's likely that they are mislabelled but correlate
+                return album.tracks
+            else:
+                matches = natsorted(items, key=lambda t: t.title)
+        else:
+            all_remote_chapters: List = deepcopy(album.tracks)
+            matches = []
+            for chapter in items:
+                #  need a string distance algorithm that penalises number replacements more
+                best_match = list(
+                    sorted(all_remote_chapters, key=lambda c: specialised_levenshtein(chapter.title, c.title, affixes))
+                )
+                best_match = best_match[0]
+                matches.append(best_match)
+                all_remote_chapters.remove(best_match)
+    tracks = convert_items_to_trackinfo(matches)
     return tracks
 
 
@@ -122,13 +146,6 @@ def specialised_levenshtein(token1: str, token2: str, ignored_affixes: Optional[
         else:
             total_cost += 1
     return total_cost
-
-
-def normalised_track_indices(tracks: List[Item]) -> List[Item]:
-    tracks = sorted(tracks, key=lambda t: t.track)
-    for i, track in enumerate(tracks):
-        track.index = i
-    return tracks
 
 
 class Audible(BeetsPlugin):
