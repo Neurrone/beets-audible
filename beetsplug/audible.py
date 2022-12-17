@@ -46,7 +46,7 @@ def sort_tracks(album: AlbumInfo, items: List[Item]) -> List[TrackInfo]:
     common_attrs = get_common_data_attributes(album.tracks[0])
     # if there's only one item, return as is
     if len(items) == 1:
-        # Prefer a sdingle named book from the remote source
+        # Prefer a single named book from the remote source
         if len(album.tracks) == 1:
             matches = album.tracks
         else:
