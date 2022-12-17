@@ -3,15 +3,18 @@ import os
 import pathlib
 import re
 import urllib.error
+from copy import deepcopy
 from tempfile import NamedTemporaryFile
-from typing import List
+from typing import List, Optional, Tuple
 
+import beets.autotag.hooks
+import Levenshtein
 import mediafile
 import yaml
 from beets import importer, util
 from beets.autotag.hooks import AlbumInfo, TrackInfo
 from beets.library import Item
-from beets.plugins import BeetsPlugin, get_distance
+from beets.plugins import BeetsPlugin
 from natsort import natsorted
 
 from .api import get_book_info, make_request, search_audible
@@ -21,6 +24,66 @@ from .goodreads import get_original_date
 def sort_items(items: List[Item]):
     naturally_sorted_items = natsorted(items, key=lambda i: i.title)
     return naturally_sorted_items
+
+
+def find_regular_affixes(example_strings: List[str]) -> Tuple[str, str]:
+    if len(example_strings) <= 1:
+        return "", ""
+    # find prefixes
+    prefix = _find_prefix(example_strings)
+    suffix = _find_prefix([s[::-1] for s in example_strings])
+    suffix = suffix[::-1]
+
+    return prefix, suffix
+
+
+def _find_prefix(example_strings: List[str]) -> str:
+    i = 0
+    for i in range(0, len(example_strings[0]) + 1):
+        if not all([e[:i] == example_strings[0][:i] for e in example_strings]):
+            i += -1
+            break
+    if i <= 0:
+        return ""
+    prefix = example_strings[0][:i]
+    return prefix
+
+
+def strip_affixes(token: str, affixes: Tuple[str, str]) -> str:
+    affixes = (re.escape(affixes[0]), re.escape(affixes[1]))
+    token = re.sub(rf"^{affixes[0]}", "", token)
+    token = re.sub(rf"{affixes[1]}$", "", token)
+    return token
+
+
+def specialised_levenshtein(token1: str, token2: str, ignored_affixes: Optional[Tuple[str, str]] = None) -> int:
+    if ignored_affixes:
+        token1 = strip_affixes(token1, ignored_affixes)
+        token2 = strip_affixes(token2, ignored_affixes)
+    operations = Levenshtein.editops(token1, token2)
+    total_cost = 0
+    for operation in operations:
+        op, s1, s2 = operation
+        if s1 >= len(token1):
+            test1 = ""
+        else:
+            test1 = token1[s1]
+        if s2 >= len(token2):
+            test2 = ""
+        else:
+            test2 = token2[s2]
+        if any([re.match(r"\d", s) for s in (test1, test2)]):
+            total_cost += 10
+        else:
+            total_cost += 1
+    return total_cost
+
+
+def normalised_track_indices(tracks: List[Item]) -> List[Item]:
+    tracks = sorted(tracks, key=lambda t: t.index)
+    for i, track in enumerate(tracks):
+        track.index = i
+    return tracks
 
 
 class Audible(BeetsPlugin):
@@ -111,11 +174,13 @@ class Audible(BeetsPlugin):
         self.add_media_field("subtitle", subtitle)
 
     def album_distance(self, items, album_info, mapping):
-        dist = get_distance(data_source=self.data_source, info=album_info, config=self.config)
+        dist = beets.autotag.hooks.Distance()
         return dist
 
     def track_distance(self, item, track_info):
-        return get_distance(data_source=self.data_source, info=track_info, config=self.config)
+        dist = beets.autotag.hooks.Distance()
+        dist.add_string("track_title", item.title, track_info.title)
+        return dist
 
     def candidates(self, items, artist, album, va_likely, extra_tags=None):
         """Returns a list of AlbumInfo objects for Audible search results
@@ -188,17 +253,21 @@ class Audible(BeetsPlugin):
                 del common_track_attributes["length"]
                 del common_track_attributes["title"]
 
-                # Ignore existing track numbers, and instead sort based on file path
-                # Use natural sorting instead of lexigraphical to avoid this order:
-                # chapter 1, 10, 12, ..., 19, 2, etc
-                # This does work correctly when the album has multiple disks
-                # using the bytestring_path function from Beets is needed for correctness
-                # I was noticing inaccurate sorting if using str to convert paths to strings
-                naturally_sorted_items = sort_items(items)
-                a.tracks = [
-                    TrackInfo(**common_track_attributes, title=item.title, length=item.length, index=i + 1)
-                    for i, item in enumerate(naturally_sorted_items)
-                ]
+                all_remote_chapters: List = deepcopy(a.tracks)
+                matches = []
+                affixes = find_regular_affixes([c.title for c in items])
+                for chapter in items:
+                    #  need a string distance algorithm that penalises number replacements more
+                    best_match = list(
+                        sorted(
+                            all_remote_chapters,
+                            key=lambda c: specialised_levenshtein(chapter.title, c.title, affixes)
+                        )
+                    )
+                    best_match = best_match[0]
+                    matches.append(best_match)
+                    all_remote_chapters.remove(best_match)
+                a.tracks = normalised_track_indices(matches)
         return albums
 
     def get_album_from_yaml_metadata(self, data, items):

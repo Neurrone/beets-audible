@@ -168,3 +168,62 @@ def test_sort_items_reversed(items: List[Item]):
 def test_sort_items_randomised(correct: List[Item], items: List[Item]):
     result = audible.sort_items(items)
     assert all([str(result[i]) == str(e) for i, e in enumerate(correct)])
+
+
+@pytest.mark.parametrize(
+    ("test_token1", "test_token2", "expected"),
+    (
+        ("example", "example", 0),
+        ("exampl", "example", 1),
+        ("example1", "example", 10),
+        ("example1", "example2", 10),
+        ("example1", "example12", 10),
+        ("example21", "example12", 20),
+        ("example1", "example1 test", 5),
+    ),
+)
+def test_specialised_levenshtein(test_token1: str, test_token2: str, expected: int):
+    result = audible.specialised_levenshtein(test_token1, test_token2)
+    assert isinstance(result, int)
+    assert result == expected
+
+
+@pytest.mark.parametrize(
+    ("test_tokens", "expected_prefix", "expected_suffix"),
+    (
+        ([], "", ""),
+        (
+            [
+                "test",
+            ],
+            "",
+            "",
+        ),
+        (["test", "test"], "test", "test"),
+        (["test1", "test2"], "test", ""),
+        (["testing", "test2"], "test", ""),
+        (["testing", "test2"], "test", ""),
+        (["prefix1suffix", "prefix2suffix"], "prefix", "suffix"),
+    ),
+)
+def test_find_regular_affixes(test_tokens: List[str], expected_prefix: str, expected_suffix: str):
+    results = audible.find_regular_affixes(test_tokens)
+    assert results[0] == expected_prefix
+    assert results[1] == expected_suffix
+
+
+@pytest.mark.parametrize(
+    ("test_token", "test_affixes", "expected"),
+    (
+        ("example", ("", ""), "example"),
+        ("test", ("test", ""), ""),
+        ("test", ("", "test"), ""),
+        ('testexampletest',('test',''), 'exampletest'),
+        ('testexampletest', ('','test'), 'testexample'),
+        ('test.mp3', ('','.mp3'), 'test'),
+        ('testxmp3',('','.mp3'), 'testxmp3'),
+    ),
+)
+def test_strip_affixes(test_token: str, test_affixes: Tuple[str, str], expected: str):
+    result = audible.strip_affixes(test_token, test_affixes)
+    assert result == expected
