@@ -42,7 +42,7 @@ def convert_items_to_trackinfo(items: List[Item], common_attrs: Dict) -> List[Tr
     return out
 
 
-def sort_tracks(album: AlbumInfo, items: List[Item]) -> List[TrackInfo]:
+def sort_tracks(album: AlbumInfo, items: List[Item]) -> Optional[List[TrackInfo]]:
     common_attrs = get_common_data_attributes(album.tracks[0])
     # if there's only one item, return as is
     if len(items) == 1:
@@ -68,14 +68,18 @@ def sort_tracks(album: AlbumInfo, items: List[Item]) -> List[TrackInfo]:
                 # otherwise a natural sort to make sure it's all sorted correctly
                 matches = natsorted(items, key=lambda t: t.title)
         else:
+            if len(items) > len(album.tracks):
+                # TODO: find a better way to handle this
+                # right now just reject this match
+                return None
             all_remote_chapters: List = deepcopy(album.tracks)
             matches = []
             for chapter in items:
                 #  need a string distance algorithm that penalises number replacements more
-                best_match = list(
+                best_matches = list(
                     sorted(all_remote_chapters, key=lambda c: specialised_levenshtein(chapter.title, c.title, affixes))
                 )
-                best_match = best_match[0]
+                best_match = best_matches[0]
                 matches.append(best_match)
                 all_remote_chapters.remove(best_match)
     tracks = convert_items_to_trackinfo(matches, common_attrs)
@@ -94,26 +98,46 @@ def calculate_average_levenshtein_difference(tokens: List[str]) -> List[float]:
 
 
 def find_regular_affixes(example_strings: List[str]) -> Tuple[str, str]:
+    """Find regular prefixes and suffices that occur in most of the titles"""
     if len(example_strings) <= 1:
         return "", ""
-    # find prefixes
-    prefix = _find_prefix(example_strings)
-    suffix = _find_prefix([s[::-1] for s in example_strings])
-    suffix = suffix[::-1]
+    prefix_result = find_best_affix_sequence(example_strings)
+    prefix = _check_affix_commonness(prefix_result)
+
+    reversed_strings = [e[::-1] for e in example_strings]
+    suffix_result = find_best_affix_sequence(reversed_strings)
+    suffix = _check_affix_commonness(suffix_result)[::-1]
 
     return prefix, suffix
 
 
-def _find_prefix(example_strings: List[str]) -> str:
-    i = 0
-    for i in range(0, len(example_strings[0]) + 1):
-        if not all([e[:i] == example_strings[0][:i] for e in example_strings]):
-            i += -1
-            break
-    if i <= 0:
-        return ""
-    prefix = example_strings[0][:i]
-    return prefix
+def _check_affix_commonness(affix_result: Tuple[str, float]) -> str:
+    # the 75% is a magic number, done through testing
+    if affix_result[1] >= 0.75:
+        out = affix_result[0]
+    else:
+        out = ''
+    return out
+
+
+def find_best_affix_sequence(example_strings: List[str]) -> Tuple[str, float]:
+    affix_sequences = set()
+    for s in example_strings:
+        for i in range(0, len(s) + 1):
+            affix_sequences.add(s[0:i])
+    # filter to minimum affix length
+    # 4 is a magic number
+    filtered_affixes = filter(lambda p: len(p) >= 4, affix_sequences)
+    affix_commonness = [(p, _check_affix_commonality(example_strings, rf"^{re.escape(p)}")) for p in filtered_affixes]
+    sorted_affixes = sorted(affix_commonness, key=lambda p: (p[1], len(p[0])), reverse=True)
+    affix = sorted_affixes[0]
+    return affix
+
+
+def _check_affix_commonality(tokens: List[str], pattern: str) -> float:
+    matches = list(filter(None, [re.match(rf"{pattern}", t) for t in tokens]))
+    total = len(matches)
+    return total / len(tokens)
 
 
 def strip_affixes(token: str, affixes: Tuple[str, str]) -> str:
@@ -124,6 +148,7 @@ def strip_affixes(token: str, affixes: Tuple[str, str]) -> str:
 
 
 def specialised_levenshtein(token1: str, token2: str, ignored_affixes: Optional[Tuple[str, str]] = None) -> int:
+    """Find the Levenshtein distance between two strings, penalising operations involving digits x10"""
     if ignored_affixes:
         token1 = strip_affixes(token1, ignored_affixes)
         token2 = strip_affixes(token2, ignored_affixes)
@@ -314,6 +339,7 @@ class Audible(BeetsPlugin):
                 del common_track_attributes["title"]
 
                 a.tracks = sort_tracks(a, items)
+        albums = list(filter(lambda a: a.tracks is not None, albums))
         return albums
 
     def get_album_from_yaml_metadata(self, data, items):

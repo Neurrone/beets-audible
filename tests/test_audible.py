@@ -204,6 +204,7 @@ def test_specialised_levenshtein(test_token1: str, test_token2: str, expected: i
         (["testing", "test2"], "test", ""),
         (["testing", "test2"], "test", ""),
         (["prefix1suffix", "prefix2suffix"], "prefix", "suffix"),
+        (["prologue", "chapter1", "chapter2", "chapter3"], "chapter", ""),
     ),
 )
 def test_find_regular_affixes(test_tokens: List[str], expected_prefix: str, expected_suffix: str):
