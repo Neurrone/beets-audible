@@ -303,42 +303,7 @@ class Audible(BeetsPlugin):
         self._log.debug(f"Searching Audible for {query}")
         albums = self.get_albums(query)
         for a in albums:
-            is_chapter_data_accurate = a.is_chapter_data_accurate
-            punctuation = r"[^\w\s\d]"
-            # normalize by removing punctuation, converting to lowercase,
-            # as well as changing multiple consecutive spaces in the string to a single space
-            normalized_book_title = re.sub(punctuation, "", a.album.strip().lower())
-            normalized_book_title = " ".join(normalized_book_title.split())
-            normalized_album_name = re.sub(abridged_indicator, "", album.strip().lower())
-            normalized_album_name = re.sub(punctuation, "", normalized_album_name)
-
-            normalized_album_name = " ".join(normalized_album_name.split())
-            self._log.debug(f"Matching album name {normalized_album_name} with book title {normalized_book_title}")
-            # account for different length strings
-            is_likely_match = (
-                normalized_album_name in normalized_book_title or normalized_book_title in normalized_album_name
-            )
-            is_chapterized = len(a.tracks) == len(items)
-            # matching doesn't work well if the number of files in the album doesn't match the number of chapters
-            # As a workaround, return the same number of tracks as the number of files.
-            # This white lie is a workaround but works extraordinarily well
-            if self.config["match_chapters"] and is_likely_match and is_chapterized and not is_chapter_data_accurate:
-                # Logging this for now because this situation
-                # is technically possible (based on the API) but unsure how often it happens
-                self._log.warn(f"Chapter data for {a.album} could be inaccurate.")
-
-            if is_likely_match and (not is_chapterized or not self.config["match_chapters"]):
-                self._log.debug(
-                    f"Attempting to match book: album {album} with {len(items)} files"
-                    f" to book {a.album} with {len(a.tracks)} chapters."
-                )
-
-                common_track_attributes = dict(a.tracks[0])
-                del common_track_attributes["index"]
-                del common_track_attributes["length"]
-                del common_track_attributes["title"]
-
-                a.tracks = sort_tracks(a, items)
+            a.tracks = sort_tracks(a, items)
         albums = list(filter(lambda a: a.tracks is not None, albums))
         return albums
 
