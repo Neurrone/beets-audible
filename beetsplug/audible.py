@@ -99,11 +99,17 @@ def find_regular_affixes(example_strings: List[str]) -> Tuple[str, str]:
     if len(example_strings) <= 1:
         return "", ""
     prefix_result = find_best_affix_sequence(example_strings)
-    prefix = _check_affix_commonness(prefix_result)
+    if prefix_result:
+        prefix = _check_affix_commonness(prefix_result)
+    else:
+        prefix = ""
 
     reversed_strings = [e[::-1] for e in example_strings]
     suffix_result = find_best_affix_sequence(reversed_strings)
-    suffix = _check_affix_commonness(suffix_result)[::-1]
+    if suffix_result:
+        suffix = _check_affix_commonness(suffix_result)[::-1]
+    else:
+        suffix = ""
 
     return prefix, suffix
 
@@ -113,11 +119,11 @@ def _check_affix_commonness(affix_result: Tuple[str, float]) -> str:
     if affix_result[1] >= 0.75:
         out = affix_result[0]
     else:
-        out = ''
+        out = ""
     return out
 
 
-def find_best_affix_sequence(example_strings: List[str]) -> Tuple[str, float]:
+def find_best_affix_sequence(example_strings: List[str]) -> Optional[Tuple[str, float]]:
     affix_sequences = set()
     for s in example_strings:
         for i in range(0, len(s) + 1):
@@ -126,9 +132,12 @@ def find_best_affix_sequence(example_strings: List[str]) -> Tuple[str, float]:
     # 4 is a magic number
     filtered_affixes = filter(lambda p: len(p) >= 4, affix_sequences)
     affix_commonness = [(p, _check_affix_commonality(example_strings, rf"^{re.escape(p)}")) for p in filtered_affixes]
-    sorted_affixes = sorted(affix_commonness, key=lambda p: (p[1], len(p[0])), reverse=True)
-    affix = sorted_affixes[0]
-    return affix
+    if affix_commonness:
+        sorted_affixes = sorted(affix_commonness, key=lambda p: (p[1], len(p[0])), reverse=True)
+        affix = sorted_affixes[0]
+        return affix
+    else:
+        return None
 
 
 def _check_affix_commonality(tokens: List[str], pattern: str) -> float:
