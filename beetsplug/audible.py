@@ -61,12 +61,9 @@ def sort_tracks(album: AlbumInfo, items: List[Item]) -> Optional[List[TrackInfo]
 
         # magic number here, it's a judgement call
         if max(average_title_change) < 4:
-            if len(items) == len(album.tracks):
-                # if the number of chapters are the same, then it's likely that they are mislabelled but correlate
-                return album.tracks
-            else:
-                # otherwise a natural sort to make sure it's all sorted correctly
-                matches = natsorted(items, key=lambda t: t.title)
+            # can't assume that the tracks actually match even when there are the same number of items, since lengths
+            # can be different e.g. an even split into n parts that aren't necessarily chapter-based so just natsort
+            matches = natsorted(items, key=lambda t: t.title)
         else:
             if len(items) > len(album.tracks):
                 # TODO: find a better way to handle this
