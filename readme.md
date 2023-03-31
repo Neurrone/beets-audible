@@ -47,6 +47,9 @@ This Beets plugin solves both problems.
      source_weight: 0.0 # disable the source_weight penalty
      fetch_art: true # whether to retrieve cover art
      include_narrator_in_artists: true # include author and narrator in artist tag. Or just author
+     keep_series_reference_in_title: true # set to false to remove ", Book X" from end of titles
+     keep_series_reference_in_subtitle: true # set to false to remove subtitle if it contains the series name and the word book ex. "Book 1 in Great Series", "Great Series, Book 1"
+
      write_description_file: true # output desc.txt
      write_reader_file: true # output reader.txt
 
