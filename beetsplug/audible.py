@@ -30,6 +30,8 @@ class Audible(BeetsPlugin):
                 "write_description_file": True,
                 "write_reader_file": True,
                 "include_narrator_in_artists": True,
+                "keep_series_reference_in_title": True,
+                "keep_series_reference_in_subtitle": True,
                 "goodreads_apikey": None,
             }
         )
@@ -326,17 +328,32 @@ class Audible(BeetsPlugin):
 
         release_date = book.release_date
         series = book.series
-        album = title
 
         if series:
             series_name = series.name
             series_position = series.position
+
+            title_cruft = f", Book {series_position}"
+            if not self.config['keep_series_reference_in_title'] and title.endswith(title_cruft):
+                # check if ', Book X' is in title, remove it
+                self._log.debug(f"Title contains '{title_cruft}'. Removing it.")
+                title = title.removesuffix(title_cruft)
+
             if series_position:
                 album_sort = f"{series_name} {series_position} - {title}"
                 content_group_description = f"{series_name}, Book #{series_position}"
             else:
                 album_sort = f"{series_name} - {title}"
                 content_group_description = None
+
+            #clean up subtitle
+            if not self.config['keep_series_reference_in_subtitle'] and subtitle and series_name.lower() in subtitle.lower() and 'book' in subtitle.lower():
+                #subtitle contains both the series name and the word "book"
+                #so it is likely just "Series, Book X" or "Book X in Series"
+                #don't include subtitle
+                subtitle = None
+                self._log.debug(f"Subtitle of '{subtitle}' is mostly just the series name. Removing it.")
+
         elif subtitle:
             album_sort = f"{title} - {subtitle}"
         else:
@@ -409,7 +426,7 @@ class Audible(BeetsPlugin):
 
         return AlbumInfo(
             tracks=tracks,
-            album=album,
+            album=title,
             album_id=asin,
             albumtype="audiobook",
             mediums=1,
