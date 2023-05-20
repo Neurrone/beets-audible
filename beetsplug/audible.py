@@ -194,6 +194,7 @@ class Audible(BeetsPlugin):
                 "keep_series_reference_in_title": True,
                 "keep_series_reference_in_subtitle": True,
                 "goodreads_apikey": None,
+                "trust_source_numbering": True,
             }
         )
         self.config["goodreads_apikey"].redact = True
