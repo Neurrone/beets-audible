@@ -1,6 +1,6 @@
+import random
 from copy import deepcopy
 from pathlib import Path
-from random import shuffle
 from typing import List, Optional, Sequence, Tuple
 from unittest.mock import MagicMock
 
@@ -9,6 +9,8 @@ from beets.library import Item
 from beets.util import bytestring_path
 
 import beetsplug.audible as audible
+
+random.seed(42)
 
 
 def create_mock_item(item_name: str, item_index: int = 0, filename: Optional[str] = None) -> MagicMock:
@@ -25,7 +27,7 @@ def randomise_lists(lists: Tuple[List, ...], n: int = 5) -> Sequence[Tuple[List,
     for l in lists:
         for i in range(1, n):
             copy = deepcopy(l)
-            shuffle(copy)
+            random.shuffle(copy)
             out.append((l, copy))
     return out
 
