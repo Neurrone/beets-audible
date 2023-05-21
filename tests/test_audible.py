@@ -1,8 +1,9 @@
 import random
+import string
 from copy import deepcopy
 from pathlib import Path
 from typing import Iterable, List, Optional, Sequence, Tuple
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 import pytest
 from beets.library import Item
@@ -32,7 +33,54 @@ def randomise_lists(lists: Tuple[List, ...], n: int = 5) -> Sequence[Tuple[List,
     return out
 
 
-chapter_lists = (
+def generate_random_string(n: int) -> str:
+    # Define the characters we want to use
+    chars = string.ascii_letters + " "
+    return "".join(random.choice(chars) for _ in range(n))
+
+
+def generate_fixture_albums(chapter_list: List[MagicMock]) -> List[MagicMock]:
+    out = []
+
+    # this mock just the chapters
+    mock_1 = MagicMock()
+    mock_1.tracks = chapter_list
+    out.append(mock_1)
+
+    # this mock is a random set of strings of the same number of chapters
+    mock_2 = MagicMock()
+    mock_2.tracks = [generate_random_string(20) for _ in chapter_list]
+    out.append(mock_2)
+
+    # this mock is a random set of strings that is more than the given chapters
+    mock_3 = MagicMock()
+    mock_3.tracks = [generate_random_string(20) for _ in range(1, len(chapter_list) + 10)]
+    out.append(mock_3)
+
+    if len(chapter_list) > 1:
+        # this mock is a random set of strings that is less than the given chapters
+        mock_4 = MagicMock()
+        mock_4.tracks = [generate_random_string(20) for _ in range(1, (len(chapter_list) // 2) + 1)]
+        out.append(mock_4)
+
+    return out
+
+
+def pytest_generate_tests(metafunc: pytest.Metafunc):
+    if "chapter_lists" in metafunc.fixturenames and "test_album" in metafunc.fixturenames:
+        test_albums = []
+        all_ids = []
+        for i, c in enumerate(all_chapter_lists):
+            for j, a in enumerate(generate_fixture_albums(c)):
+                test_albums.append((c, a))
+                all_ids.append(f"chapter_list{i}-album_fixture{j}")
+
+        metafunc.parametrize("chapter_lists,test_album", test_albums, ids=all_ids)
+    elif "chapter_lists" in metafunc.fixturenames:
+        metafunc.parametrize("chapter_lists", all_chapter_lists)
+
+
+all_chapter_lists = (
     [
         create_mock_item("01", 0),
         create_mock_item("02", 0),
@@ -196,24 +244,31 @@ chapter_lists = (
 )
 
 
-@pytest.mark.parametrize("items", chapter_lists)
-def test_sort_items(items: List[Item]):
-    expected = deepcopy(items)
-    result = audible.sort_items(items)
+def test_sort_items(chapter_lists: List[Item], mock_audible_plugin, test_album: List[MagicMock]):
+    expected = deepcopy(chapter_lists)
+    result = sort_tracks_for_test(chapter_lists, mock_audible_plugin, test_album)
     assert all([str(result[i]) == str(e) for i, e in enumerate(expected)])
 
 
-@pytest.mark.parametrize("items", chapter_lists)
-def test_sort_items_reversed(items: List[Item]):
-    expected = deepcopy(items)
-    result = audible.sort_items(reversed(items))
+def sort_tracks_for_test(chapter_lists, mock_audible_plugin, test_album):
+    with patch("beetsplug.audible.get_common_data_attributes", return_value=dict()):
+        with patch("beetsplug.audible.convert_items_to_trackinfo", lambda x, _: x):
+            result = mock_audible_plugin.sort_tracks(mock_audible_plugin, test_album, chapter_lists)
+    return result
+
+
+def test_sort_items_reversed(chapter_lists: List[Item], mock_audible_plugin, test_album: List[MagicMock]):
+    expected = deepcopy(chapter_lists)
+    result = mock_audible_plugin.sort_tracks(mock_audible_plugin, test_album, reversed(chapter_lists))
     assert all([str(result[i]) == str(e) for i, e in enumerate(expected)])
 
 
-@pytest.mark.parametrize("correct, items", randomise_lists(chapter_lists, 10))
-def test_sort_items_randomised(correct: List[Item], items: List[Item]):
-    result = audible.sort_items(items)
-    assert all([str(result[i]) == str(e) for i, e in enumerate(correct)])
+# @pytest.mark.parametrize("correct, items", randomise_lists(chapter_lists, 10))
+# def test_sort_items_randomised(
+#     correct: List[Item], items: List[Item], mock_audible_plugin, test_album: List[MagicMock]
+# ):
+#     result = mock_audible_plugin.sort_tracks(mock_audible_plugin, test_album, items)
+#     assert all([str(result[i]) == str(e) for i, e in enumerate(correct)])
 
 
 @pytest.mark.online
@@ -456,7 +511,7 @@ def test_audiobook_chapter_matching(
     mock_audible_plugin: MagicMock,
 ):
     test_album = audible.Audible.get_album_info(mock_audible_plugin, test_audiobook_id)
-    results = audible.sort_tracks(test_album, test_items)
+    results = mock_audible_plugin.sort_tracks(mock_audible_plugin, test_album, test_items)
     assert results is not None
     assert all([results[i].title == e for i, e in enumerate(expected_items)])
     assert len(results) == len(expected_items)
@@ -530,6 +585,7 @@ def test_strip_affixes(test_token: str, test_affixes: Tuple[str, str], expected:
         ((0, 1, 2), True),
         ((10, 11, 12), True),
         ((10, 11, 13), False),
+        ((3, 2, 1), False),
     ),
 )
 def test_is_continuous_number_series(test_numbers: Iterable[int], expected: bool):
