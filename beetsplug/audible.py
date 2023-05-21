@@ -252,7 +252,7 @@ class Audible(BeetsPlugin):
             average_title_change = calculate_average_levenshtein_difference(stripped_titles)
 
             # if there are only a few track differences from each to the other, it's likely they're numbered and don't have
-            # otherwise unique titles, so just sort them as best as possible
+            # otherwise unique titles, so just sort them best as possible
 
             # magic number here, it's a judgement call
             if max(average_title_change) < 4:
@@ -267,7 +267,7 @@ class Audible(BeetsPlugin):
                 all_remote_chapters: List = deepcopy(album.tracks)
                 matches = []
                 for chapter in items:
-                    #  need a string distance algorithm that penalises number replacements more
+                    # TODO: need a string distance algorithm that penalises number replacements more
                     best_matches = list(
                         sorted(
                             all_remote_chapters, key=lambda c: specialised_levenshtein(chapter.title, c.title, affixes)
