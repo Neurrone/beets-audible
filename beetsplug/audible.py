@@ -46,47 +46,6 @@ def is_continuous_number_series(numbers: Iterable[int]):
     return all(b - a == 1 for a, b in zip(numbers, numbers[1:]))
 
 
-def sort_tracks(album: AlbumInfo, items: List[Item]) -> Optional[List[TrackInfo]]:
-    common_attrs = get_common_data_attributes(album.tracks[0])
-    # if there's only one item, return as is
-    if len(items) == 1:
-        # Prefer a single named book from the remote source
-        if len(album.tracks) == 1:
-            matches = album.tracks
-        else:
-            matches = items
-    else:
-        affixes = find_regular_affixes([c.title for c in items])
-        stripped_titles = [strip_affixes(i.title, affixes) for i in items]
-        average_title_change = calculate_average_levenshtein_difference(stripped_titles)
-
-        # if there are only a few track differences from each to the other, it's likely they're numbered and don't have
-        # otherwise unique titles, so just sort them as best as possible
-
-        # magic number here, it's a judgement call
-        if max(average_title_change) < 4:
-            # can't assume that the tracks actually match even when there are the same number of items, since lengths
-            # can be different e.g. an even split into n parts that aren't necessarily chapter-based so just natsort
-            matches = natsorted(items, key=lambda t: t.title)
-        else:
-            if len(items) > len(album.tracks):
-                # TODO: find a better way to handle this
-                # right now just reject this match
-                return None
-            all_remote_chapters: List = deepcopy(album.tracks)
-            matches = []
-            for chapter in items:
-                #  need a string distance algorithm that penalises number replacements more
-                best_matches = list(
-                    sorted(all_remote_chapters, key=lambda c: specialised_levenshtein(chapter.title, c.title, affixes))
-                )
-                best_match = best_matches[0]
-                matches.append(best_match)
-                all_remote_chapters.remove(best_match)
-    tracks = convert_items_to_trackinfo(matches, common_attrs)
-    return tracks
-
-
 def calculate_average_levenshtein_difference(tokens: List[str]) -> List[float]:
     out = []
     for token in tokens:
@@ -278,6 +237,48 @@ class Audible(BeetsPlugin):
         dist.add_string("track_title", item.title, track_info.title)
         return dist
 
+    def sort_tracks(self, album: AlbumInfo, items: List[Item]) -> Optional[List[TrackInfo]]:
+        common_attrs = get_common_data_attributes(album.tracks[0])
+        # if there's only one item, return as is
+        if len(items) == 1:
+            # Prefer a single named book from the remote source
+            if len(album.tracks) == 1:
+                matches = album.tracks
+            else:
+                matches = items
+        else:
+            affixes = find_regular_affixes([c.title for c in items])
+            stripped_titles = [strip_affixes(i.title, affixes) for i in items]
+            average_title_change = calculate_average_levenshtein_difference(stripped_titles)
+
+            # if there are only a few track differences from each to the other, it's likely they're numbered and don't have
+            # otherwise unique titles, so just sort them as best as possible
+
+            # magic number here, it's a judgement call
+            if max(average_title_change) < 4:
+                # can't assume that the tracks actually match even when there are the same number of items, since lengths
+                # can be different e.g. an even split into n parts that aren't necessarily chapter-based so just natsort
+                matches = natsorted(items, key=lambda t: t.title)
+            else:
+                if len(items) > len(album.tracks):
+                    # TODO: find a better way to handle this
+                    # right now just reject this match
+                    return None
+                all_remote_chapters: List = deepcopy(album.tracks)
+                matches = []
+                for chapter in items:
+                    #  need a string distance algorithm that penalises number replacements more
+                    best_matches = list(
+                        sorted(
+                            all_remote_chapters, key=lambda c: specialised_levenshtein(chapter.title, c.title, affixes)
+                        )
+                    )
+                    best_match = best_matches[0]
+                    matches.append(best_match)
+                    all_remote_chapters.remove(best_match)
+        tracks = convert_items_to_trackinfo(matches, common_attrs)
+        return tracks
+
     def candidates(self, items, artist, album, va_likely, extra_tags=None):
         """Returns a list of AlbumInfo objects for Audible search results
         matching an album and artist (if not various).
@@ -314,7 +315,7 @@ class Audible(BeetsPlugin):
         self._log.debug(f"Searching Audible for {query}")
         albums = self.get_albums(query)
         for a in albums:
-            a.tracks = sort_tracks(a, items)
+            a.tracks = self.sort_tracks(a, items)
         albums = list(filter(lambda a: a.tracks is not None, albums))
         return albums
 
