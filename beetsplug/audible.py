@@ -42,8 +42,8 @@ def convert_items_to_trackinfo(items: List[Item], common_attrs: Dict) -> List[Tr
     return out
 
 
-def is_continuous_number_series(numbers: Iterable[int]):
-    return all(b - a == 1 for a, b in zip(numbers, numbers[1:]))
+def is_continuous_number_series(numbers: Iterable[Optional[int]]):
+    return all([n is not None for n in numbers]) and all(b - a == 1 for a, b in zip(numbers, numbers[1:]))
 
 
 def calculate_average_levenshtein_difference(tokens: List[str]) -> List[float]:

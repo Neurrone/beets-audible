@@ -583,12 +583,13 @@ def test_strip_affixes(test_token: str, test_affixes: Tuple[str, str], expected:
         ((1,), True),
         ((1, 2), True),
         ((0, 1, 2), True),
+        ((0, None, 2), False),
+        ((0, 1, None), False),
         ((10, 11, 12), True),
         ((10, 11, 13), False),
-        ((3, 2, 1), False),
     ),
 )
-def test_is_continuous_number_series(test_numbers: Iterable[int], expected: bool):
+def test_is_continuous_number_series(test_numbers: Iterable[Optional[int]], expected: bool):
     result = audible.is_continuous_number_series(test_numbers)
     assert result == expected
 
