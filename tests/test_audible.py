@@ -1,7 +1,7 @@
 import random
 from copy import deepcopy
 from pathlib import Path
-from typing import List, Optional, Sequence, Tuple
+from typing import Iterable, List, Optional, Sequence, Tuple
 from unittest.mock import MagicMock
 
 import pytest
@@ -519,4 +519,19 @@ def test_find_regular_affixes(test_tokens: List[str], expected_prefix: str, expe
 )
 def test_strip_affixes(test_token: str, test_affixes: Tuple[str, str], expected: str):
     result = audible.strip_affixes(test_token, test_affixes)
+    assert result == expected
+
+
+@pytest.mark.parametrize(
+    ("test_numbers", "expected"),
+    (
+        ((1,), True),
+        ((1, 2), True),
+        ((0, 1, 2), True),
+        ((10, 11, 12), True),
+        ((10, 11, 13), False),
+    ),
+)
+def test_is_continuous_number_series(test_numbers: Iterable[int], expected: bool):
+    result = audible.is_continuous_number_series(test_numbers)
     assert result == expected

@@ -5,7 +5,7 @@ import re
 import urllib.error
 from copy import deepcopy
 from tempfile import NamedTemporaryFile
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, Iterable, List, Optional, Tuple
 
 import beets.autotag.hooks
 import Levenshtein
@@ -40,6 +40,10 @@ def convert_items_to_trackinfo(items: List[Item], common_attrs: Dict) -> List[Tr
         track = TrackInfo(**common_attrs, title=item.title, length=item.length, index=i)
         out.append(track)
     return out
+
+
+def is_continuous_number_series(numbers: Iterable[int]):
+    return all(b - a == 1 for a, b in zip(numbers, numbers[1:]))
 
 
 def sort_tracks(album: AlbumInfo, items: List[Item]) -> Optional[List[TrackInfo]]:
