@@ -76,6 +76,18 @@ def pytest_generate_tests(metafunc: pytest.Metafunc):
                 all_ids.append(f"chapter_list{i}-album_fixture{j}")
 
         metafunc.parametrize("chapter_lists,test_album", test_albums, ids=all_ids)
+    elif all(s in metafunc.fixturenames for s in ("randomised_items", "correct", "test_album")):
+        test_albums = []
+        all_ids = []
+        for i, c in enumerate(all_chapter_lists):
+            for j in range(1, 11):
+                intermediate = random.sample(c, k=len(c))
+                for k, a in enumerate(generate_fixture_albums(intermediate)):
+                    test_albums.append((c, intermediate, a))
+                    all_ids.append(f"chapter_list{i}-randomisation{j}-album_fixture{k}")
+
+        metafunc.parametrize("correct,randomised_items,test_album", test_albums, ids=all_ids)
+
     elif "chapter_lists" in metafunc.fixturenames:
         metafunc.parametrize("chapter_lists", all_chapter_lists)
 
@@ -183,19 +195,19 @@ all_chapter_lists = (
         create_mock_item("Chapter 14 Last Words The Untold Story of the DC Sniper Investigation - 1.m4b", 0),
     ],
     [
-        create_mock_item("Prologue", 0),
-        create_mock_item("Chapter 1", 0),
-        create_mock_item("Chapter 2", 0),
-        create_mock_item("Chapter 3", 0),
-        create_mock_item("Chapter 4", 0),
-        create_mock_item("Chapter 5", 0),
-        create_mock_item("Chapter 6", 0),
-        create_mock_item("Chapter 7", 0),
-        create_mock_item("Chapter 8", 0),
-        create_mock_item("Chapter 9", 0),
-        create_mock_item("Chapter 10", 0),
-        create_mock_item("End", 0),
-        create_mock_item("Author's Note", 0),
+        create_mock_item("Prologue", 1),
+        create_mock_item("Chapter 1", 2),
+        create_mock_item("Chapter 2", 3),
+        create_mock_item("Chapter 3", 4),
+        create_mock_item("Chapter 4", 5),
+        create_mock_item("Chapter 5", 6),
+        create_mock_item("Chapter 6", 7),
+        create_mock_item("Chapter 7", 8),
+        create_mock_item("Chapter 8", 9),
+        create_mock_item("Chapter 9", 10),
+        create_mock_item("Chapter 10", 11),
+        create_mock_item("End", 12),
+        create_mock_item("Author's Note", 13),
     ],
     [
         create_mock_item("01 - Zg503IhGHXyRdZeVn838pZGhvO7uwM5C", 0),
@@ -241,6 +253,23 @@ all_chapter_lists = (
         create_mock_item("97D0VmI9qgnRDPhwwkRwuL7atFCSKmNJ", 19),
         create_mock_item("AEBmW2Dspf6czIMsF3l9u2IwmqUw826u", 20),
     ],
+    # haven't thought of logic that would allow for this type of thing. honestly it might be impossible if there's no
+    # online reference that exactly matches
+    # [
+    #     create_mock_item("Prologue", 0),
+    #     create_mock_item("Chapter 1", 0),
+    #     create_mock_item("Chapter 2", 0),
+    #     create_mock_item("Chapter 3", 0),
+    #     create_mock_item("Chapter 4", 0),
+    #     create_mock_item("Chapter 5", 0),
+    #     create_mock_item("Chapter 6", 0),
+    #     create_mock_item("Chapter 7", 0),
+    #     create_mock_item("Chapter 8", 0),
+    #     create_mock_item("Chapter 9", 0),
+    #     create_mock_item("Chapter 10", 0),
+    #     create_mock_item("End", 0),
+    #     create_mock_item("Author's Note", 0),
+    # ],
 )
 
 
@@ -259,16 +288,18 @@ def sort_tracks_for_test(chapter_lists, mock_audible_plugin, test_album):
 
 def test_sort_items_reversed(chapter_lists: List[Item], mock_audible_plugin, test_album: List[MagicMock]):
     expected = deepcopy(chapter_lists)
-    result = mock_audible_plugin.sort_tracks(mock_audible_plugin, test_album, reversed(chapter_lists))
+    result = sort_tracks_for_test(chapter_lists, mock_audible_plugin, test_album)
     assert all([str(result[i]) == str(e) for i, e in enumerate(expected)])
 
 
-# @pytest.mark.parametrize("correct, items", randomise_lists(chapter_lists, 10))
-# def test_sort_items_randomised(
-#     correct: List[Item], items: List[Item], mock_audible_plugin, test_album: List[MagicMock]
-# ):
-#     result = mock_audible_plugin.sort_tracks(mock_audible_plugin, test_album, items)
-#     assert all([str(result[i]) == str(e) for i, e in enumerate(correct)])
+def test_sort_items_randomised(
+    correct: List[Item],
+    randomised_items: List[Item],
+    mock_audible_plugin,
+    test_album: List[MagicMock],
+):
+    result = sort_tracks_for_test(randomised_items, mock_audible_plugin, test_album)
+    assert all([str(result[i]) == str(e) for i, e in enumerate(correct)])
 
 
 @pytest.mark.online
