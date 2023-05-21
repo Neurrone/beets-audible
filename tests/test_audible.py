@@ -93,7 +93,7 @@ def pytest_generate_tests(metafunc: pytest.Metafunc):
 
 
 all_chapter_lists = (
-    [
+    [  # 0
         create_mock_item("01", 0),
         create_mock_item("02", 0),
         create_mock_item("03", 0),
@@ -108,7 +108,7 @@ all_chapter_lists = (
         create_mock_item("12", 0),
         create_mock_item("13", 0),
     ],
-    [
+    [  # 1
         create_mock_item("Chapter 1", 0),
         create_mock_item("Chapter 2", 0),
         create_mock_item("Chapter 3", 0),
@@ -120,7 +120,7 @@ all_chapter_lists = (
         create_mock_item("Chapter 9", 0),
         create_mock_item("Chapter 10", 0),
     ],
-    [
+    [  # 2
         create_mock_item("Chapter 01", 0),
         create_mock_item("Chapter 02", 0),
         create_mock_item("Chapter 03", 0),
@@ -132,7 +132,7 @@ all_chapter_lists = (
         create_mock_item("Chapter 09", 0),
         create_mock_item("Chapter 10", 0),
     ],
-    [
+    [  # 3
         create_mock_item("Chapter - 01", 0),
         create_mock_item("Chapter - 02", 0),
         create_mock_item("Chapter - 03", 0),
@@ -147,7 +147,7 @@ all_chapter_lists = (
         create_mock_item("Chapter - 12", 0),
         create_mock_item("Chapter - 13", 0),
     ],
-    [
+    [  # 4
         create_mock_item("Chapter-01", 0),
         create_mock_item("Chapter-02", 0),
         create_mock_item("Chapter-03", 0),
@@ -162,7 +162,7 @@ all_chapter_lists = (
         create_mock_item("Chapter-12", 0),
         create_mock_item("Chapter-13", 0),
     ],
-    [
+    [  # 5
         create_mock_item("Mediocre-Part01", 0),
         create_mock_item("Mediocre-Part02", 0),
         create_mock_item("Mediocre-Part03", 0),
@@ -176,7 +176,7 @@ all_chapter_lists = (
         create_mock_item("Mediocre-Part11", 0),
         create_mock_item("Mediocre-Part12", 0),
     ],
-    [
+    [  # 6
         create_mock_item("Chapter 1 The DC Sniper The Untold Story of the DC Sniper Investigation - 1.m4b", 0),
         create_mock_item("Chapter 2 Terrorism The Untold Story of the DC Sniper Investigation - 1.m4b", 0),
         create_mock_item("Chapter 3 Brothers in the Arena The Untold Story of the DC Sniper Investigation - 1.m4b", 0),
@@ -194,7 +194,7 @@ all_chapter_lists = (
         ),
         create_mock_item("Chapter 14 Last Words The Untold Story of the DC Sniper Investigation - 1.m4b", 0),
     ],
-    [
+    [  # 7
         create_mock_item("Prologue", 1),
         create_mock_item("Chapter 1", 2),
         create_mock_item("Chapter 2", 3),
@@ -209,7 +209,7 @@ all_chapter_lists = (
         create_mock_item("End", 12),
         create_mock_item("Author's Note", 13),
     ],
-    [
+    [  # 8
         create_mock_item("01 - Zg503IhGHXyRdZeVn838pZGhvO7uwM5C", 0),
         create_mock_item("02 - Hf7KcfUB8rsP2AzR8DlZgx3CRXN5ABKM", 0),
         create_mock_item("03 - nzCOIa8IGCZtInmoxa1M3zS5FmM9F8E7", 0),
@@ -231,7 +231,7 @@ all_chapter_lists = (
         create_mock_item("19 - 97D0VmI9qgnRDPhwwkRwuL7atFCSKmNJ", 0),
         create_mock_item("20 - AEBmW2Dspf6czIMsF3l9u2IwmqUw826u", 0),
     ],
-    [
+    [  # 9
         create_mock_item("Zg503IhGHXyRdZeVn838pZGhvO7uwM5C", 1),
         create_mock_item("Hf7KcfUB8rsP2AzR8DlZgx3CRXN5ABKM", 2),
         create_mock_item("nzCOIa8IGCZtInmoxa1M3zS5FmM9F8E7", 3),
