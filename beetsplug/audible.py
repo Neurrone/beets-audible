@@ -261,16 +261,17 @@ class Audible(BeetsPlugin):
         else:
             # if the source files are numbered continuously and the option is set, trust that
             if self.config["trust_source_numbering"]:
-                if is_continuous_number_series([t.track for t in sorted(items, key=lambda t: t.track)]):
+                sorted_tracks = sorted(items, key=lambda t: t.track)
+                if is_continuous_number_series([t.track for t in sorted_tracks]):
                     # if the track is zero indexed, re-number them
-                    if items[0].track != 1:
+                    if sorted_tracks[0].track != 1:
                         matches = []
-                        for i, item in enumerate(items, start=1):
+                        for i, item in enumerate(sorted_tracks, start=1):
                             match = item
                             match.track = i
                             matches.append(match)
                     else:
-                        matches = items
+                        matches = sorted_tracks
                     tracks = convert_items_to_trackinfo(matches, common_attrs)
                     return tracks
 
