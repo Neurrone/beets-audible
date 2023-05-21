@@ -591,3 +591,20 @@ def test_strip_affixes(test_token: str, test_affixes: Tuple[str, str], expected:
 def test_is_continuous_number_series(test_numbers: Iterable[int], expected: bool):
     result = audible.is_continuous_number_series(test_numbers)
     assert result == expected
+
+
+@pytest.mark.parametrize(
+    ("test_string", "expected"),
+    (
+        ("01 test", 1),
+        ("01-test", 1),
+        ("01_test", 1),
+        ("100_test", 100),
+        ("01 - test", 1),
+        ("test", None),
+        ("0t1 test", None),
+    ),
+)
+def test_check_starts_with_number(test_string: str, expected: Optional[int]):
+    result = audible.check_starts_with_number(test_string)
+    assert result == expected

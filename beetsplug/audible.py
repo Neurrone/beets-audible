@@ -116,6 +116,18 @@ def strip_affixes(token: str, affixes: Tuple[str, str]) -> str:
     return token
 
 
+def check_starts_with_number(string: str) -> Optional[int]:
+    pattern = re.compile(r"^(\d+)[ -_]")
+    result = pattern.match(string)
+    if result:
+        try:
+            number = result.group(1)
+            number = int(number)
+            return number
+        except ValueError:
+            pass
+
+
 def specialised_levenshtein(token1: str, token2: str, ignored_affixes: Optional[Tuple[str, str]] = None) -> int:
     """Find the Levenshtein distance between two strings, penalising operations involving digits x10"""
     if ignored_affixes:
