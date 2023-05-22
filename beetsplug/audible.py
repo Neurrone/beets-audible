@@ -250,6 +250,8 @@ class Audible(BeetsPlugin):
         return dist
 
     def attempt_match_trust_source_numbering(self, items: List[Item], album: AlbumInfo) -> Optional[List[Item]]:
+        """If the input album is numbered and the number range is contiguous (doesn't skip any numbers), then trust
+        that and start the index from 1 if it's not already."""
         if self.config["trust_source_numbering"]:
             sorted_tracks = sorted(items, key=lambda t: t.track)
             if is_continuous_number_series([t.track for t in sorted_tracks]):
@@ -265,6 +267,7 @@ class Audible(BeetsPlugin):
                 return matches
 
     def attempt_match_starting_numbers(self, items: List[Item], album: AlbumInfo) -> Optional[List[Item]]:
+        """Order tracks based on a starting number in the track name."""
         affixes = find_regular_affixes([c.title for c in items])
         stripped_titles = [strip_affixes(i.title, affixes) for i in items]
 
@@ -276,6 +279,7 @@ class Audible(BeetsPlugin):
             return matches
 
     def attempt_match_natsort(self, items: List[Item], album: AlbumInfo) -> Optional[List[Item]]:
+        """Use a natural sort on the input tracks to order them like a person would i.e. 10 is after 9, not 2."""
         affixes = find_regular_affixes([c.title for c in items])
         stripped_titles = [strip_affixes(i.title, affixes) for i in items]
         average_title_change = calculate_average_levenshtein_difference(stripped_titles)
@@ -287,6 +291,10 @@ class Audible(BeetsPlugin):
             return matches
 
     def attempt_match_chapter_levenshtein(self, items: List[Item], album: AlbumInfo) -> Optional[List[Item]]:
+        """For every chapter in the input album, calculate the Levenshtein difference between every item in the online
+        album and match each input track to the closest online track."""
+        # Warning, this method is rather messy, and it's easy for this to go wrong.
+        # This should be used as a last resort
         affixes = find_regular_affixes([c.title for c in items])
 
         all_remote_chapters: List = deepcopy(album.tracks)
@@ -305,6 +313,7 @@ class Audible(BeetsPlugin):
         return matches
 
     def attempt_match_single_item(self, items: List[Item], album: AlbumInfo) -> Optional[List[Item]]:
+        """If the input album has a single item, use that; if the album also has a single item, prefer that."""
         if len(items) == 1:
             # Prefer a single named book from the remote source
             if len(album.tracks) == 1:
