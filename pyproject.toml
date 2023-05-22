@@ -5,7 +5,7 @@ description = "Beets plugin for audiobook management"
 authors = ["Dickson Tan <dickson.tan.2013@gmail.com>"]
 keywords = ["beets", "audible"]
 license = "MIT"
-readme = "readme.md"
+readme = "README.md"
 repository = "https://github.com/Neurrone/beets-audible"
 packages = [{ include = "beetsplug" }]
 
