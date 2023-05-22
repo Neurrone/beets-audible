@@ -17,49 +17,47 @@ This Beets plugin solves both problems.
 1. Install via pip: `pip install beets-audible beets-copyartifacts3` (copyartifacts is optional but recommended). See the next section instead if you're running Beets in Docker (highly recommended as it makes it easier to maintain a separate Beets installation dedicated to audiobooks).
 2. Use a separate beets config and database for managing audiobooks. This is the recommended Beets config for this plugin:
 
-   ```yaml
-   # add audible to the list of plugins
-   # copyartifacts is optional but recommended if you're manually specifying metadata via metadata.yml, see the "Importing non-audible content" section
-   # also add the "web" plugin if using the docker image
-   plugins: audible copyartifacts edit fromfilename scrub
+```yaml
+# add audible to the list of plugins
+# copyartifacts is optional but recommended if you're manually specifying metadata via metadata.yml, see the "Importing non-audible content" section
+plugins: audible copyartifacts edit fromfilename scrub
 
-   directory: /audiobooks
+directory: /audiobooks
 
-   # Place books in their own folders to be compatible with Booksonic and Audiobookshelf servers
-   paths:
-     # For books that belong to a series
-     "albumtype:audiobook series_name::.+ series_position::.+": $albumartist/%ifdef{series_name}/%ifdef{series_position} - $album%aunique{}/$track - $title
-     "albumtype:audiobook series_name::.+": $albumartist/%ifdef{series_name}/$album%aunique{}/$track - $title
-     # Stand-alone books
-     "albumtype:audiobook": $albumartist/$album%aunique{}/$track - $title
-     default: $albumartist/$album%aunique{}/$track - $title
-     singleton: Non-Album/$artist - $title
-     comp: Compilations/$album%aunique{}/$track - $title
-     albumtype_soundtrack: Soundtracks/$album/$track $title
+# Place books in their own folders to be compatible with Booksonic and Audiobookshelf servers
+paths:
+    # For books that belong to a series
+    "albumtype:audiobook series_name::.+ series_position::.+": $albumartist/%ifdef{series_name}/%ifdef{series_position} - $album%aunique{}/$track - $title
+    "albumtype:audiobook series_name::.+": $albumartist/%ifdef{series_name}/$album%aunique{}/$track - $title
+    # Stand-alone books
+    "albumtype:audiobook": $albumartist/$album%aunique{}/$track - $title
+    default: $albumartist/$album%aunique{}/$track - $title
+    singleton: Non-Album/$artist - $title
+    comp: Compilations/$album%aunique{}/$track - $title
+    albumtype_soundtrack: Soundtracks/$album/$track $title
 
-   # disables musicbrainz lookup, as it doesn't help for audiobooks
-   musicbrainz:
-     host: localhost:5123
+# disables musicbrainz lookup, as it doesn't help for audiobooks
+musicbrainz:
+enabled: no
 
-   audible:
-     # if the number of files in the book is the same as the number of chapters from Audible,
-     # attempt to match each file to an audible chapter
-     match_chapters: true
-     source_weight: 0.0 # disable the source_weight penalty
-     fetch_art: true # whether to retrieve cover art
-     include_narrator_in_artists: true # include author and narrator in artist tag. Or just author
-     keep_series_reference_in_title: true # set to false to remove ", Book X" from end of titles
-     keep_series_reference_in_subtitle: true # set to false to remove subtitle if it contains the series name and the word book ex. "Book 1 in Great Series", "Great Series, Book 1"
+audible:
+  # if the number of files in the book is the same as the number of chapters from Audible,
+  # attempt to match each file to an audible chapter
+  match_chapters: true
+  source_weight: 0.0 # disable the source_weight penalty
+  fetch_art: true # whether to retrieve cover art
+  include_narrator_in_artists: true # include author and narrator in artist tag. Or just author
+  keep_series_reference_in_title: true # set to false to remove ", Book X" from end of titles
+  keep_series_reference_in_subtitle: true # set to false to remove subtitle if it contains the series name and the word book ex. "Book 1 in Great Series", "Great Series, Book 1"
+  write_description_file: true # output desc.txt
+  write_reader_file: true # output reader.txt
 
-     write_description_file: true # output desc.txt
-     write_reader_file: true # output reader.txt
+copyartifacts:
+    extensions: .yml # so that metadata.yml is copied, see below
 
-   copyartifacts:
-     extensions: .yml # so that metadata.yml is copied, see below
-
-   scrub:
-     auto: yes # optional, enabling this is personal preference
-   ```
+scrub:
+    auto: yes # optional, enabling this is personal preference
+```
 
 3. Run the `beet --version` command and verify that the audible plugin appears in the list of plugins.
 
