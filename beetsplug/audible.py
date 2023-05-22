@@ -343,7 +343,7 @@ class Audible(BeetsPlugin):
         for algorithm_choice in self.config["chapter_matching_algorithms"]:
             if algorithm_choice not in possible_matching_algorithms.keys():
                 self._log.error(f"'{algorithm_choice}' is not a valid algorithm choice for chapter matching")
-                return
+                continue
             function = possible_matching_algorithms[algorithm_choice]
             matches = function(items, album)
             if matches is not None:
