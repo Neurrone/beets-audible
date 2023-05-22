@@ -249,70 +249,103 @@ class Audible(BeetsPlugin):
         dist.add_string("track_title", item.title, track_info.title)
         return dist
 
-    def sort_tracks(self, album: AlbumInfo, items: List[Item]) -> Optional[List[TrackInfo]]:
-        common_attrs = get_common_data_attributes(album.tracks[0])
-        # if there's only one item, return as is
+    def attempt_match_trust_source_numbering(self, items: List[Item], album: AlbumInfo) -> Optional[List[Item]]:
+        if self.config["trust_source_numbering"]:
+            sorted_tracks = sorted(items, key=lambda t: t.track)
+            if is_continuous_number_series([t.track for t in sorted_tracks]):
+                # if the track is zero indexed, re-number them
+                if sorted_tracks[0].track != 1:
+                    matches = []
+                    for i, item in enumerate(sorted_tracks, start=1):
+                        match = item
+                        match.track = i
+                        matches.append(match)
+                else:
+                    matches = sorted_tracks
+                return matches
+
+    def attempt_match_starting_numbers(self, items: List[Item], album: AlbumInfo) -> Optional[List[Item]]:
+        affixes = find_regular_affixes([c.title for c in items])
+        stripped_titles = [strip_affixes(i.title, affixes) for i in items]
+
+        starting_numbers = [check_starts_with_number(s) for s in stripped_titles]
+        if all(starting_numbers) and is_continuous_number_series(sorted(starting_numbers)):
+            items_with_numbers = list(zip(starting_numbers, items))
+            matches = sorted(items_with_numbers, key=lambda i: i[0])
+            matches = [i[1] for i in matches]
+            return matches
+
+    def attempt_match_natsort(self, items: List[Item], album: AlbumInfo) -> Optional[List[Item]]:
+        affixes = find_regular_affixes([c.title for c in items])
+        stripped_titles = [strip_affixes(i.title, affixes) for i in items]
+        average_title_change = calculate_average_levenshtein_difference(stripped_titles)
+        # magic number here, it's a judgement call
+        if max(average_title_change) < 4:
+            # can't assume that the tracks actually match even when there are the same number of items, since lengths
+            # can be different e.g. an even split into n parts that aren't necessarily chapter-based so just natsort
+            matches = natsorted(items, key=lambda t: t.title)
+            return matches
+
+    def attempt_match_chapter_strings(self, items: List[Item], album: AlbumInfo) -> Optional[List[Item]]:
+        affixes = find_regular_affixes([c.title for c in items])
+
+        all_remote_chapters: List = deepcopy(album.tracks)
+        matches = []
+        for chapter in items:
+            # TODO: need a string distance algorithm that penalises number replacements more
+            best_matches = list(
+                sorted(
+                    all_remote_chapters,
+                    key=lambda c: specialised_levenshtein(chapter.title, c.title, affixes),
+                )
+            )
+            best_match = best_matches[0]
+            matches.append(best_match)
+            all_remote_chapters.remove(best_match)
+        return matches
+
+    def attempt_match_single_item(self, items: List[Item], album: AlbumInfo) -> Optional[List[Item]]:
         if len(items) == 1:
             # Prefer a single named book from the remote source
             if len(album.tracks) == 1:
                 matches = album.tracks
             else:
                 matches = items
-        else:
-            # if the source files are numbered continuously and the option is set, trust that
-            if self.config["trust_source_numbering"]:
-                sorted_tracks = sorted(items, key=lambda t: t.track)
-                if is_continuous_number_series([t.track for t in sorted_tracks]):
-                    # if the track is zero indexed, re-number them
-                    if sorted_tracks[0].track != 1:
-                        matches = []
-                        for i, item in enumerate(sorted_tracks, start=1):
-                            match = item
-                            match.track = i
-                            matches.append(match)
-                    else:
-                        matches = sorted_tracks
-                    tracks = convert_items_to_trackinfo(matches, common_attrs)
-                    return tracks
+            return matches
 
-            affixes = find_regular_affixes([c.title for c in items])
-            stripped_titles = [strip_affixes(i.title, affixes) for i in items]
-            average_title_change = calculate_average_levenshtein_difference(stripped_titles)
+    def sort_tracks(self, album: AlbumInfo, items: List[Item]) -> Optional[List[TrackInfo]]:
+        common_attrs = get_common_data_attributes(album.tracks[0])
+        # if there's only one item, return as is
+        matches = self.attempt_match_single_item(items, album)
+        if matches is not None:
+            tracks = convert_items_to_trackinfo(matches, common_attrs)
+            return tracks
+        # if the source files are numbered continuously and the option is set, trust that
+        matches = self.attempt_match_trust_source_numbering(items, album)
+        if matches is not None:
+            tracks = convert_items_to_trackinfo(matches, common_attrs)
+            return tracks
 
-            starting_numbers = [check_starts_with_number(s) for s in stripped_titles]
-            if all(starting_numbers) and is_continuous_number_series(sorted(starting_numbers)):
-                items_with_numbers = list(zip(starting_numbers, items))
-                matches = sorted(items_with_numbers, key=lambda i: i[0])
-                matches = [i[1] for i in matches]
-            else:
-                # if there are only a few track differences from each to the other, it's likely they're numbered and don't have
-                # otherwise unique titles, so just sort them best as possible
+        matches = self.attempt_match_starting_numbers(items, album)
+        if matches is not None:
+            tracks = convert_items_to_trackinfo(matches, common_attrs)
+            return tracks
 
-                # magic number here, it's a judgement call
-                if max(average_title_change) < 4:
-                    # can't assume that the tracks actually match even when there are the same number of items, since lengths
-                    # can be different e.g. an even split into n parts that aren't necessarily chapter-based so just natsort
-                    matches = natsorted(items, key=lambda t: t.title)
-                else:
-                    if len(items) > len(album.tracks):
-                        # TODO: find a better way to handle this
-                        # right now just reject this match
-                        return None
-                    all_remote_chapters: List = deepcopy(album.tracks)
-                    matches = []
-                    for chapter in items:
-                        # TODO: need a string distance algorithm that penalises number replacements more
-                        best_matches = list(
-                            sorted(
-                                all_remote_chapters,
-                                key=lambda c: specialised_levenshtein(chapter.title, c.title, affixes),
-                            )
-                        )
-                        best_match = best_matches[0]
-                        matches.append(best_match)
-                        all_remote_chapters.remove(best_match)
-        tracks = convert_items_to_trackinfo(matches, common_attrs)
-        return tracks
+        # if there are only a few track differences from each to the other, it's likely they're numbered and don't have
+        # otherwise unique titles, so just sort them best as possible
+        matches = self.attempt_match_natsort(items, album)
+        if matches is not None:
+            tracks = convert_items_to_trackinfo(matches, common_attrs)
+            return tracks
+
+        if len(items) > len(album.tracks):
+            # TODO: find a better way to handle this
+            # right now just reject this match
+            return None
+        matches = self.attempt_match_chapter_strings(album, items, matches)
+        if matches is not None:
+            tracks = convert_items_to_trackinfo(matches, common_attrs)
+            return tracks
 
     def candidates(self, items, artist, album, va_likely, extra_tags=None):
         """Returns a list of AlbumInfo objects for Audible search results
