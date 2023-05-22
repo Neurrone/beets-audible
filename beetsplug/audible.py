@@ -286,7 +286,7 @@ class Audible(BeetsPlugin):
             matches = natsorted(items, key=lambda t: t.title)
             return matches
 
-    def attempt_match_chapter_strings(self, items: List[Item], album: AlbumInfo) -> Optional[List[Item]]:
+    def attempt_match_chapter_levenshtein(self, items: List[Item], album: AlbumInfo) -> Optional[List[Item]]:
         affixes = find_regular_affixes([c.title for c in items])
 
         all_remote_chapters: List = deepcopy(album.tracks)

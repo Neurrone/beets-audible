@@ -9,7 +9,7 @@ from beetsplug.audible import Audible
 def mock_audible_plugin() -> MagicMock:
     out = MagicMock()
     out.sort_tracks = Audible.sort_tracks
-    out.attempt_match_chapter_strings = lambda x, y: Audible.attempt_match_chapter_strings(out, x, y)
+    out.attempt_match_chapter_levenshtein = lambda x, y: Audible.attempt_match_chapter_levenshtein(out, x, y)
     out.attempt_match_natsort = lambda x, y: Audible.attempt_match_natsort(out, x, y)
     out.attempt_match_starting_numbers = lambda x, y: Audible.attempt_match_starting_numbers(out, x, y)
     out.attempt_match_trust_source_numbering = lambda x, y: Audible.attempt_match_trust_source_numbering(out, x, y)
