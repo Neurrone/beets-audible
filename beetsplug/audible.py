@@ -160,6 +160,13 @@ class Audible(BeetsPlugin):
 
         self.config.add(
             {
+                "chapter_matching_algorithms": [
+                    "single_file",
+                    "source_numbering",
+                    "starting_numbers",
+                    "natural_sort",
+                    "chapter_levenshtein",
+                ],
                 "fetch_art": True,
                 "match_chapters": True,
                 "source_weight": 0.0,
@@ -252,19 +259,18 @@ class Audible(BeetsPlugin):
     def attempt_match_trust_source_numbering(self, items: List[Item], album: AlbumInfo) -> Optional[List[Item]]:
         """If the input album is numbered and the number range is contiguous (doesn't skip any numbers), then trust
         that and start the index from 1 if it's not already."""
-        if self.config["trust_source_numbering"]:
-            sorted_tracks = sorted(items, key=lambda t: t.track)
-            if is_continuous_number_series([t.track for t in sorted_tracks]):
-                # if the track is zero indexed, re-number them
-                if sorted_tracks[0].track != 1:
-                    matches = []
-                    for i, item in enumerate(sorted_tracks, start=1):
-                        match = item
-                        match.track = i
-                        matches.append(match)
-                else:
-                    matches = sorted_tracks
-                return matches
+        sorted_tracks = sorted(items, key=lambda t: t.track)
+        if is_continuous_number_series([t.track for t in sorted_tracks]):
+            # if the track is zero indexed, re-number them
+            if sorted_tracks[0].track != 1:
+                matches = []
+                for i, item in enumerate(sorted_tracks, start=1):
+                    match = item
+                    match.track = i
+                    matches.append(match)
+            else:
+                matches = sorted_tracks
+            return matches
 
     def attempt_match_starting_numbers(self, items: List[Item], album: AlbumInfo) -> Optional[List[Item]]:
         """Order tracks based on a starting number in the track name."""
@@ -324,37 +330,29 @@ class Audible(BeetsPlugin):
 
     def sort_tracks(self, album: AlbumInfo, items: List[Item]) -> Optional[List[TrackInfo]]:
         common_attrs = get_common_data_attributes(album.tracks[0])
-        # if there's only one item, return as is
-        matches = self.attempt_match_single_item(items, album)
-        if matches is not None:
-            tracks = convert_items_to_trackinfo(matches, common_attrs)
-            return tracks
-        # if the source files are numbered continuously and the option is set, trust that
-        matches = self.attempt_match_trust_source_numbering(items, album)
-        if matches is not None:
-            tracks = convert_items_to_trackinfo(matches, common_attrs)
-            return tracks
 
-        matches = self.attempt_match_starting_numbers(items, album)
-        if matches is not None:
-            tracks = convert_items_to_trackinfo(matches, common_attrs)
-            return tracks
-
-        # if there are only a few track differences from each to the other, it's likely they're numbered and don't have
-        # otherwise unique titles, so just sort them best as possible
-        matches = self.attempt_match_natsort(items, album)
-        if matches is not None:
-            tracks = convert_items_to_trackinfo(matches, common_attrs)
-            return tracks
-
-        if len(items) > len(album.tracks):
-            # TODO: find a better way to handle this
-            # right now just reject this match
-            return None
-        matches = self.attempt_match_chapter_strings(album, items, matches)
-        if matches is not None:
-            tracks = convert_items_to_trackinfo(matches, common_attrs)
-            return tracks
+        # this is the master list of different approaches
+        # must be updated for any additional options added in the future
+        possible_matching_algorithms = {
+            "single_file": self.attempt_match_single_item,
+            "source_numbering": self.attempt_match_trust_source_numbering,
+            "starting_numbers": self.attempt_match_starting_numbers,
+            "natural_sort": self.attempt_match_natsort,
+            "chapter_levenshtein": self.attempt_match_chapter_levenshtein,
+        }
+        for algorithm_choice in self.config["chapter_matching_algorithms"]:
+            if algorithm_choice not in possible_matching_algorithms.keys():
+                self._log.error(f"'{algorithm_choice}' is not a valid algorithm choice for chapter matching")
+                return
+            function = possible_matching_algorithms[algorithm_choice]
+            matches = function(items, album)
+            if matches is not None:
+                tracks = convert_items_to_trackinfo(matches, common_attrs)
+                return tracks
+        # if len(items) > len(album.tracks):
+        #     # TODO: find a better way to handle this
+        #     # right now just reject this match
+        #     return None
 
     def candidates(self, items, artist, album, va_likely, extra_tags=None):
         """Returns a list of AlbumInfo objects for Audible search results

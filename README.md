@@ -51,6 +51,12 @@ audible:
   keep_series_reference_in_subtitle: true # set to false to remove subtitle if it contains the series name and the word book ex. "Book 1 in Great Series", "Great Series, Book 1"
   write_description_file: true # output desc.txt
   write_reader_file: true # output reader.txt
+ chapter_matching_algorithms:
+     single_file
+     source_numbering
+     starting_numbers
+     natural_sort
+     chapter_levenshtein
 
 copyartifacts:
     extensions: .yml # so that metadata.yml is copied, see below
