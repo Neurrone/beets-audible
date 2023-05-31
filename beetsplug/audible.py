@@ -278,7 +278,7 @@ class Audible(BeetsPlugin):
         stripped_titles = [strip_affixes(i.title, affixes) for i in items]
 
         starting_numbers = [check_starts_with_number(s) for s in stripped_titles]
-        if all(starting_numbers) and is_continuous_number_series(sorted(starting_numbers)):
+        if all([s is not None for s in starting_numbers]) and is_continuous_number_series(sorted(starting_numbers)):
             items_with_numbers = list(zip(starting_numbers, items))
             matches = sorted(items_with_numbers, key=lambda i: i[0])
             matches = [i[1] for i in matches]
