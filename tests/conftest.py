@@ -5,7 +5,7 @@ import pytest
 from beetsplug.audible import Audible
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="function")
 def mock_audible_plugin() -> MagicMock:
     out = MagicMock()
     out.sort_tracks = Audible.sort_tracks

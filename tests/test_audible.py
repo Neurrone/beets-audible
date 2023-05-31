@@ -2,7 +2,7 @@ import random
 import string
 from copy import deepcopy
 from pathlib import Path
-from typing import Iterable, List, Optional, Sequence, Tuple
+from typing import Callable, Iterable, List, Optional, Sequence, Tuple
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -319,6 +319,31 @@ def test_sort_items_randomised(
     test_album: List[MagicMock],
 ):
     result = sort_tracks_for_test(randomised_items, mock_audible_plugin, test_album)
+    assert all([str(result[i]) == str(e) for i, e in enumerate(correct)])
+
+
+@pytest.mark.parametrize(
+    ("test_chapter_list", "test_algorithm_choice", "album_generation_function"),
+    (
+        (all_chapter_lists[0], "starting_numbers", generate_test_album_same),
+        (all_chapter_lists[0], "natural_sort", generate_test_album_same),
+        (all_chapter_lists[0], "chapter_levenshtein", generate_test_album_same),
+        (all_chapter_lists[0], "chapter_levenshtein", generate_test_album_same),
+        (all_chapter_lists[7], "source_numbering", generate_test_album_same),
+    ),
+)
+def test_sort_specific_method(
+    mock_audible_plugin: MagicMock,
+    test_chapter_list: List,
+    test_algorithm_choice: str,
+    album_generation_function: Callable,
+):
+    test_album = album_generation_function(deepcopy(test_chapter_list))
+    correct = deepcopy(test_chapter_list)
+    mock_audible_plugin.config["chapter_matching_algorithms"] = [
+        test_algorithm_choice,
+    ]
+    result = sort_tracks_for_test(test_chapter_list, mock_audible_plugin, test_album)
     assert all([str(result[i]) == str(e) for i, e in enumerate(correct)])
 
 
@@ -654,7 +679,10 @@ def test_is_continuous_number_series(test_numbers: Iterable[Optional[int]], expe
         ("100_test", 100),
         ("01 - test", 1),
         ("test", None),
-        ("0t1 test", None),
+        ("0t1 test", 0),
+        ("01", 1),
+        ("001", 1),
+        ("012", 12),
     ),
 )
 def test_check_starts_with_number(test_string: str, expected: Optional[int]):

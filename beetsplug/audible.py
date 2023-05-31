@@ -117,7 +117,7 @@ def strip_affixes(token: str, affixes: Tuple[str, str]) -> str:
 
 
 def check_starts_with_number(string: str) -> Optional[int]:
-    pattern = re.compile(r"^(\d+)[ -_]")
+    pattern = re.compile(r"^(\d+)[ -_]?")
     result = pattern.match(string)
     if result:
         try:
