@@ -39,28 +39,48 @@ def generate_random_string(n: int) -> str:
     return "".join(random.choice(chars) for _ in range(n))
 
 
+def generate_test_album_random_string_smaller_len(chapter_list):
+    mock_4 = MagicMock()
+    mock_4.tracks = [generate_random_string(20) for _ in range(1, (len(chapter_list) // 2) + 1)]
+    return mock_4
+
+
+def generate_test_album_random_string_greater_len(chapter_list):
+    mock_3 = MagicMock()
+    mock_3.tracks = [generate_random_string(20) for _ in range(1, len(chapter_list) + 10)]
+    return mock_3
+
+
+def generate_test_album_random_string_same_len(chapter_list):
+    mock_2 = MagicMock()
+    mock_2.tracks = [generate_random_string(20) for _ in chapter_list]
+    return mock_2
+
+
+def generate_test_album_same(chapter_list):
+    mock_1 = MagicMock()
+    mock_1.tracks = chapter_list
+    return mock_1
+
+
 def generate_fixture_albums(chapter_list: List[MagicMock]) -> List[MagicMock]:
     out = []
 
     # this mock just the chapters
-    mock_1 = MagicMock()
-    mock_1.tracks = chapter_list
+    mock_1 = generate_test_album_same(chapter_list)
     out.append(mock_1)
 
     # this mock is a random set of strings of the same number of chapters
-    mock_2 = MagicMock()
-    mock_2.tracks = [generate_random_string(20) for _ in chapter_list]
+    mock_2 = generate_test_album_random_string_same_len(chapter_list)
     out.append(mock_2)
 
     # this mock is a random set of strings that is more than the given chapters
-    mock_3 = MagicMock()
-    mock_3.tracks = [generate_random_string(20) for _ in range(1, len(chapter_list) + 10)]
+    mock_3 = generate_test_album_random_string_greater_len(chapter_list)
     out.append(mock_3)
 
     if len(chapter_list) > 1:
         # this mock is a random set of strings that is less than the given chapters
-        mock_4 = MagicMock()
-        mock_4.tracks = [generate_random_string(20) for _ in range(1, (len(chapter_list) // 2) + 1)]
+        mock_4 = generate_test_album_random_string_smaller_len(chapter_list)
         out.append(mock_4)
 
     return out
