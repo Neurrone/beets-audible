@@ -313,7 +313,10 @@ class Audible(BeetsPlugin):
                     key=lambda c: specialised_levenshtein(chapter.title, c.title, affixes),
                 )
             )
-            best_match = best_matches[0]
+            try:
+                best_match = best_matches[0]
+            except IndexError:
+                return None
             matches.append(best_match)
             all_remote_chapters.remove(best_match)
         return matches
