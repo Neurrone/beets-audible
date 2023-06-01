@@ -32,7 +32,15 @@ def test_call_audnex_for_book_info(test_asin: str, expected_dicts: Tuple[Dict, D
     assert all([expected_dicts[1].get(k) == result[1][k] for k in expected_dicts[1].keys()])
 
 
-@pytest.mark.parametrize("test_asin", ("1529353823", "B00KDKSKFO", "1529063094", "B0B3PL1HQL"))
+@pytest.mark.parametrize(
+    "test_asin",
+    (
+        "1529353823",
+        "B00KDKSKFO",
+        "1529063094",
+        "B0B3PL1HQL",
+    ),
+)
 def test_get_book_info(test_asin: str):
     # Just checking to make sure that there are no exceptions thrown
     _, _ = api.get_book_info(test_asin)
