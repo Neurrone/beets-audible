@@ -207,6 +207,28 @@ George Orwell/
 
 Desc.txt and reader.txt contain the book description and narrator populated from Audible.
 
+## Chapter Matching Algorithms
+
+There are a number of different ways to try and match chapters that appear in audiobooks. These fit the vast majority of cases that can occur with the files of any audiobooks but the process is entirely customisable. There are a number of algorithms, approaches to do this, that are included in this plugin. However if you encounter a situation that these algorithms don't cover, submit it as a bug report so it can be seen and added to the test cases.
+
+Below are descriptions of the different approaches.
+
+- `single_file`
+  - If the audiobook consists of a single file, then the chapters will simply be the file itself, or the name of the chapters from online if there is only one match returned.
+- `source_numbering`
+  - If the metadata for the chapters are already contains an order that is continuous, then this will be trusted and used as the ordering.
+- `starting_numbers`
+  - If the files start with a consistent series of numbers (with or without a consistent prefix such as 'Chapter') and those numbers are contiguous, then those will be used.
+- `natural_sort`
+  - If the files have only a little difference between them, then they will be sorted as a person sorts them.
+- `chapter_levenshtein`
+  - The distance between the names of the chapters and the online data is computed and each chapter is matched with the closest online version.
+  - This method should be last as it is the most variable and least likely to work, but is also the only one that rewrites the chapters' data.
+
+Each of these is included in the configuration file. Reordering the lines in the configuration file will change the order in which they are used. Removing a line will prevent that algorithm from being used entirely. This is the way it is possible to customise the plugin to fit your library, or even a specific audiobook.
+
+Note that only the Levenshtein approach changes the names of the chapters. At the most the indexes will be changed with the remained of the algorithms, due to the approaches they take. This is assuming that it is more important for the chapters to be in the right order, and for the book itself to have the right metadata as a whole, rather than the chapters having the same title as the tracks on Audible.
+
 ## Tags Written
 
 The plugin writes the following tags:
