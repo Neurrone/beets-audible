@@ -234,7 +234,7 @@ Note that only the Levenshtein approach changes the names of the chapters. At th
 The plugin writes the following tags:
 
 | ID3 Tag                                  | Audible.com Value                                                                                                                   |
-| ---------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+|------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------|
 | `TIT1` (CONTENTGROUP)                    | Series, Book #                                                                                                                      |
 | `TALB` (ALBUM)                           | Title                                                                                                                               |
 | `TIT3` (SUBTITLE)                        | Subtitle                                                                                                                            |
