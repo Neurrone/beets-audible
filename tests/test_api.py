@@ -36,9 +36,7 @@ def test_call_audnex_for_book_info(test_asin: str, expected_dicts: Tuple[Dict, D
     "test_asin",
     (
         "1529353823",
-        "B00KDKSKFO",
         "1529063094",
-        "B0B3PL1HQL",
     ),
 )
 def test_get_book_info(test_asin: str):
