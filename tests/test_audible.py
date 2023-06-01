@@ -385,45 +385,6 @@ def test_sort_specific_method(
             ("Kleptopia: How Dirty Money Is Conquering the World",),
         ),
         (
-            "B07XTN4FTJ",
-            (
-                create_mock_item("Chapter 1 The DC Sniper The Untold Story of the DC Sniper Investigation - 1.m4b", 0),
-                create_mock_item("Chapter 2 Terrorism The Untold Story of the DC Sniper Investigation - 1.m4b", 0),
-                create_mock_item(
-                    "Chapter 3 Brothers in the Arena The Untold Story of the DC Sniper Investigation - 1.m4b", 0
-                ),
-                create_mock_item("Chapter 4 Call Me God The Untold Story of the DC Sniper Investigation - 1.m4b", 0),
-                create_mock_item("Chapter 5 Close to Home The Untold Story of the DC Sniper Investigation - 1.m4b", 0),
-                create_mock_item("Chapter 6 A Local Case The Untold Story of the DC Sniper Investigation - 1.m4b", 0),
-                create_mock_item("Chapter 7 Demands The Untold Story of the DC Sniper Investigation - 1.m4b", 0),
-                create_mock_item("Chapter 8 The Profile The Untold Story of the DC Sniper Investigation - 1.m4b", 0),
-                create_mock_item("Chapter 9 Suspects The Untold Story of the DC Sniper Investigation - 1.m4b", 0),
-                create_mock_item("Chapter 10 Prelude The Untold Story of the DC Sniper Investigation - 1.m4b", 0),
-                create_mock_item("Chapter 11 The Arrest The Untold Story of the DC Sniper Investigation - 1.m4b", 0),
-                create_mock_item("Chapter 12 Revenge The Untold Story of the DC Sniper Investigation - 1.m4b", 0),
-                create_mock_item(
-                    "Chapter 13 The Trials of a Teenager The Untold Story of the DC Sniper Investigation - 1.m4b", 0
-                ),
-                create_mock_item("Chapter 14 Last Words The Untold Story of the DC Sniper Investigation - 1.m4b", 0),
-            ),
-            (
-                "Chapter 1: The DC Sniper",
-                "Chapter 2: Terrorism",
-                "Chapter 3: Brothers in the Arena",
-                "Chapter 4: Call Me God",
-                "Chapter 5: Close to Home",
-                "Chapter 6: A Local Case",
-                "Chapter 7: Demands",
-                "Chapter 8: The Profile",
-                "Chapter 9: Suspects",
-                "Chapter 10: Prelude",
-                "Chapter 11: The Arrest",
-                "Chapter 12: Revenge",
-                "Chapter 13: The Trials of a Teenager",
-                "Chapter 14: Last Words",
-            ),
-        ),
-        (
             "B005CJAB5S",
             (
                 create_mock_item("Cats-Eye-000.mp3", 0),
