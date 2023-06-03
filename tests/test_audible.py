@@ -567,6 +567,11 @@ def test_sort_specific_method(
                 "9.mp3",
             ),
         ),
+        (
+            "B077KBHSNQ",
+            (create_mock_item("The Tranzia Rebellion.mp3", 0),),
+            ("The Tranzia Rebellion.mp3",),
+        ),
     ),
 )
 def test_audiobook_chapter_matching(

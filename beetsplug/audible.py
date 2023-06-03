@@ -325,7 +325,7 @@ class Audible(BeetsPlugin):
         """If the input album has a single item, use that; if the album also has a single item, prefer that."""
         if len(items) == 1:
             # Prefer a single named book from the remote source
-            if len(album.tracks) == 1:
+            if len(album.tracks) == 1 and album.tracks[0].title != "Chapter 1":
                 matches = album.tracks
             else:
                 matches = items
