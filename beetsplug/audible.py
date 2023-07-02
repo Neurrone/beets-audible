@@ -13,7 +13,8 @@ import mediafile
 import yaml
 from beets import importer, util
 from beets.autotag.hooks import AlbumInfo, TrackInfo
-from beets.library import Item
+from beets.dbcore.types import STRING
+from beets.library import Album, Item
 from beets.plugins import BeetsPlugin
 from natsort import natsorted
 
@@ -152,8 +153,15 @@ def specialised_levenshtein(token1: str, token2: str, ignored_affixes: Optional[
     return total_cost
 
 
+def _get_album_narrator(album: Album):
+    return album.items()[0]["composer"]
+
+
 class Audible(BeetsPlugin):
     data_source = "Audible"
+    album_types = {
+        "narrator": STRING,
+    }
 
     def __init__(self):
         super().__init__()
@@ -184,6 +192,8 @@ class Audible(BeetsPlugin):
         self.cover_art_urls = {}
         # stores paths of downloaded cover art to be used during import
         self.cover_art = {}
+
+        self.album_template_fields["narrator"] = _get_album_narrator
 
         self.register_listener("write", self.on_write)
         self.register_listener("import_task_files", self.on_import_task_files)
