@@ -20,6 +20,7 @@ This Beets plugin solves both problems.
    ```yaml
    # add audible to the list of plugins
    # copyartifacts is optional but recommended if you're manually specifying metadata via metadata.yml, see the "Importing non-audible content" section
+   # also add the "web" plugin if using the docker image
    plugins: audible copyartifacts edit fromfilename scrub
 
    directory: /audiobooks
@@ -38,7 +39,7 @@ This Beets plugin solves both problems.
 
    # disables musicbrainz lookup, as it doesn't help for audiobooks
    musicbrainz:
-     enabled: no
+     host: localhost:5123
 
    audible:
      # if the number of files in the book is the same as the number of chapters from Audible,
@@ -81,7 +82,7 @@ This Beets plugin solves both problems.
    version: "3"
    services:
      beets:
-       image: lscr.io/linuxserver/beets:latest
+       image: lscr.io/linuxserver/beets:1.6.0-ls180
        container_name: beets
        environment:
          # Update as needed
@@ -90,7 +91,7 @@ This Beets plugin solves both problems.
          - TZ=Asia/Singapore
        volumes:
          - ./config:/config
-         - ./scripts:/config/custom-cont-init.d
+         - ./scripts:/custom-cont-init.d
          - /path/to/audiobooks:/audiobooks
          - /path/to/import/books/from:/input
        restart: unless-stopped
