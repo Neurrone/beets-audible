@@ -1,3 +1,4 @@
 pytest
+pytest-random
 tox
 tox-pyenv
