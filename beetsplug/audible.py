@@ -8,12 +8,12 @@ from tempfile import NamedTemporaryFile
 from typing import Dict, Iterable, List, Optional, Tuple
 
 import beets.autotag.hooks
+import beets.dbcore.types as types
 import Levenshtein
 import mediafile
 import yaml
 from beets import importer, util
 from beets.autotag.hooks import AlbumInfo, TrackInfo
-from beets.dbcore.types import STRING
 from beets.library import Album, Item
 from beets.plugins import BeetsPlugin
 from natsort import natsorted
@@ -154,13 +154,13 @@ def specialised_levenshtein(token1: str, token2: str, ignored_affixes: Optional[
 
 
 def _get_album_narrator(album: Album):
-    return album.items()[0]["composer"]
+    return list(album.items())[0]["composer"]
 
 
 class Audible(BeetsPlugin):
     data_source = "Audible"
     album_types = {
-        "narrator": STRING,
+        "narrator": types.STRING,
     }
 
     def __init__(self):
