@@ -17,49 +17,52 @@ This Beets plugin solves both problems.
 1. Install via pip: `pip install beets-audible beets-copyartifacts3` (copyartifacts is optional but recommended). See the next section instead if you're running Beets in Docker (highly recommended as it makes it easier to maintain a separate Beets installation dedicated to audiobooks).
 2. Use a separate beets config and database for managing audiobooks. This is the recommended Beets config for this plugin:
 
-   ```yaml
-   # add audible to the list of plugins
-   # copyartifacts is optional but recommended if you're manually specifying metadata via metadata.yml, see the "Importing non-audible content" section
-   # also add the "web" plugin if using the docker image
-   plugins: audible copyartifacts edit fromfilename scrub
+```yaml
+# add audible to the list of plugins
+# copyartifacts is optional but recommended if you're manually specifying metadata via metadata.yml, see the "Importing non-audible content" section
+plugins: audible copyartifacts edit fromfilename scrub
 
-   directory: /audiobooks
+directory: /audiobooks
 
-   # Place books in their own folders to be compatible with Booksonic and Audiobookshelf servers
-   paths:
-     # For books that belong to a series
-     "albumtype:audiobook series_name::.+ series_position::.+": $albumartist/%ifdef{series_name}/%ifdef{series_position} - $album%aunique{}/$track - $title
-     "albumtype:audiobook series_name::.+": $albumartist/%ifdef{series_name}/$album%aunique{}/$track - $title
-     # Stand-alone books
-     "albumtype:audiobook": $albumartist/$album%aunique{}/$track - $title
-     default: $albumartist/$album%aunique{}/$track - $title
-     singleton: Non-Album/$artist - $title
-     comp: Compilations/$album%aunique{}/$track - $title
-     albumtype_soundtrack: Soundtracks/$album/$track $title
+# Place books in their own folders to be compatible with Booksonic and Audiobookshelf servers
+paths:
+    # For books that belong to a series
+    "albumtype:audiobook series_name::.+ series_position::.+": $albumartist/%ifdef{series_name}/%ifdef{series_position} - $album%aunique{}/$track - $title
+    "albumtype:audiobook series_name::.+": $albumartist/%ifdef{series_name}/$album%aunique{}/$track - $title
+    # Stand-alone books
+    "albumtype:audiobook": $albumartist/$album%aunique{}/$track - $title
+    default: $albumartist/$album%aunique{}/$track - $title
+    singleton: Non-Album/$artist - $title
+    comp: Compilations/$album%aunique{}/$track - $title
+    albumtype_soundtrack: Soundtracks/$album/$track $title
 
-   # disables musicbrainz lookup, as it doesn't help for audiobooks
-   musicbrainz:
-     host: localhost:5123
+# disables musicbrainz lookup, as it doesn't help for audiobooks
+musicbrainz:
+enabled: no
 
-   audible:
-     # if the number of files in the book is the same as the number of chapters from Audible,
-     # attempt to match each file to an audible chapter
-     match_chapters: true
-     source_weight: 0.0 # disable the source_weight penalty
-     fetch_art: true # whether to retrieve cover art
-     include_narrator_in_artists: true # include author and narrator in artist tag. Or just author
-     keep_series_reference_in_title: true # set to false to remove ", Book X" from end of titles
-     keep_series_reference_in_subtitle: true # set to false to remove subtitle if it contains the series name and the word book ex. "Book 1 in Great Series", "Great Series, Book 1"
+audible:
+  # if the number of files in the book is the same as the number of chapters from Audible,
+  # attempt to match each file to an audible chapter
+  match_chapters: true
+  fetch_art: true # whether to retrieve cover art
+  include_narrator_in_artists: true # include author and narrator in artist tag. Or just author
+  keep_series_reference_in_title: true # set to false to remove ", Book X" from end of titles
+  keep_series_reference_in_subtitle: true # set to false to remove subtitle if it contains the series name and the word book ex. "Book 1 in Great Series", "Great Series, Book 1"
+  write_description_file: true # output desc.txt
+  write_reader_file: true # output reader.txt
+  chapter_matching_algorithms:
+     - single_file
+     - source_numbering
+     - starting_numbers
+     - natural_sort
+     - chapter_levenshtein
 
-     write_description_file: true # output desc.txt
-     write_reader_file: true # output reader.txt
+copyartifacts:
+    extensions: .yml # so that metadata.yml is copied, see below
 
-   copyartifacts:
-     extensions: .yml # so that metadata.yml is copied, see below
-
-   scrub:
-     auto: yes # optional, enabling this is personal preference
-   ```
+scrub:
+    auto: yes # optional, enabling this is personal preference
+```
 
 3. Run the `beet --version` command and verify that the audible plugin appears in the list of plugins.
 
@@ -203,12 +206,34 @@ George Orwell/
 
 Desc.txt and reader.txt contain the book description and narrator populated from Audible.
 
+## Chapter Matching Algorithms
+
+There are a number of different ways to try and match chapters that appear in audiobooks. These fit the vast majority of cases that can occur with the files of any audiobooks but the process is entirely customisable. There are a number of algorithms, approaches to do this, that are included in this plugin. However if you encounter a situation that these algorithms don't cover, submit it as a bug report so it can be seen and added to the test cases.
+
+Below are descriptions of the different approaches.
+
+- `single_file`
+  - If the audiobook consists of a single file, then the chapters will simply be the file itself, or the name of the chapters from online if there is only one match returned.
+- `source_numbering`
+  - If the metadata for the chapters are already contains an order that is continuous, then this will be trusted and used as the ordering.
+- `starting_numbers`
+  - If the files start with a consistent series of numbers (with or without a consistent prefix such as 'Chapter') and those numbers are contiguous, then those will be used.
+- `natural_sort`
+  - If the files have only a little difference between them, then they will be sorted as a person sorts them.
+- `chapter_levenshtein`
+  - The distance between the names of the chapters and the online data is computed and each chapter is matched with the closest online version.
+  - This method should be last as it is the most variable and least likely to work, but is also the only one that rewrites the chapters' data.
+
+Each of these is included in the configuration file. Reordering the lines in the configuration file will change the order in which they are used. Removing a line will prevent that algorithm from being used entirely. This is the way it is possible to customise the plugin to fit your library, or even a specific audiobook.
+
+Note that only the Levenshtein approach changes the names of the chapters. At the most the indexes will be changed with the remained of the algorithms, due to the approaches they take. This is assuming that it is more important for the chapters to be in the right order, and for the book itself to have the right metadata as a whole, rather than the chapters having the same title as the tracks on Audible.
+
 ## Tags Written
 
 The plugin writes the following tags:
 
 | ID3 Tag                                  | Audible.com Value                                                                                                                   |
-| ---------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+|------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------|
 | `TIT1` (CONTENTGROUP)                    | Series, Book #                                                                                                                      |
 | `TALB` (ALBUM)                           | Title                                                                                                                               |
 | `TIT3` (SUBTITLE)                        | Subtitle                                                                                                                            |

@@ -3,27 +3,178 @@ import os
 import pathlib
 import re
 import urllib.error
+from copy import deepcopy
 from tempfile import NamedTemporaryFile
+from typing import Dict, Iterable, List, Optional, Tuple
 
+import beets.autotag.hooks
+import beets.dbcore.types as types
+import Levenshtein
 import mediafile
 import yaml
 from beets import importer, util
 from beets.autotag.hooks import AlbumInfo, TrackInfo
-from beets.plugins import BeetsPlugin, get_distance
-from natsort import os_sorted
+from beets.library import Album, Item
+from beets.plugins import BeetsPlugin
+from natsort import natsorted
 
 from .api import get_book_info, make_request, search_audible
 from .goodreads import get_original_date
 
 
+def sort_items(items: List[Item]):
+    naturally_sorted_items = natsorted(items, key=lambda i: i.title)
+    return naturally_sorted_items
+
+
+def get_common_data_attributes(track: TrackInfo) -> Dict:
+    common_track_attributes = dict(track)
+    del common_track_attributes["index"]
+    del common_track_attributes["length"]
+    del common_track_attributes["title"]
+    return common_track_attributes
+
+
+def convert_items_to_trackinfo(items: List[Item], common_attrs: Dict) -> List[TrackInfo]:
+    out = []
+    for i, item in enumerate(items, start=1):
+        track = TrackInfo(**common_attrs, title=item.title, length=item.length, index=i)
+        out.append(track)
+    return out
+
+
+def is_continuous_number_series(numbers: Iterable[Optional[int]]):
+    return all([n is not None for n in numbers]) and all(b - a == 1 for a, b in zip(numbers, numbers[1:]))
+
+
+def calculate_average_levenshtein_difference(tokens: List[str]) -> List[float]:
+    out = []
+    for token in tokens:
+        temp = []
+        for other in tokens:
+            temp.append(Levenshtein.distance(token, other))
+        num = len(tokens) - 1
+        out.append(sum(temp) / num)
+    return out
+
+
+def find_regular_affixes(example_strings: List[str]) -> Tuple[str, str]:
+    """Find regular prefixes and suffices that occur in most of the titles"""
+    if len(example_strings) <= 1:
+        return "", ""
+    prefix_result = find_best_affix_sequence(example_strings)
+    if prefix_result:
+        prefix = _check_affix_commonness(prefix_result)
+    else:
+        prefix = ""
+
+    reversed_strings = [e[::-1] for e in example_strings]
+    suffix_result = find_best_affix_sequence(reversed_strings)
+    if suffix_result:
+        suffix = _check_affix_commonness(suffix_result)[::-1]
+    else:
+        suffix = ""
+
+    return prefix, suffix
+
+
+def _check_affix_commonness(affix_result: Tuple[str, float]) -> str:
+    # the 75% is a magic number, done through testing
+    if affix_result[1] >= 0.75:
+        out = affix_result[0]
+    else:
+        out = ""
+    return out
+
+
+def find_best_affix_sequence(example_strings: List[str]) -> Optional[Tuple[str, float]]:
+    affix_sequences = set()
+    for s in example_strings:
+        for i in range(0, len(s) + 1):
+            affix_sequences.add(s[0:i])
+    # filter to minimum affix length
+    # 4 is a magic number
+    filtered_affixes = filter(lambda p: len(p) >= 4, affix_sequences)
+    affix_commonness = [(p, _check_affix_commonality(example_strings, rf"^{re.escape(p)}")) for p in filtered_affixes]
+    if affix_commonness:
+        sorted_affixes = sorted(affix_commonness, key=lambda p: (p[1], len(p[0])), reverse=True)
+        affix = sorted_affixes[0]
+        return affix
+    else:
+        return None
+
+
+def _check_affix_commonality(tokens: List[str], pattern: str) -> float:
+    matches = list(filter(None, [re.match(rf"{pattern}", t) for t in tokens]))
+    total = len(matches)
+    return total / len(tokens)
+
+
+def strip_affixes(token: str, affixes: Tuple[str, str]) -> str:
+    affixes = (re.escape(affixes[0]), re.escape(affixes[1]))
+    token = re.sub(rf"^{affixes[0]}", "", token)
+    token = re.sub(rf"{affixes[1]}$", "", token)
+    return token
+
+
+def check_starts_with_number(string: str) -> Optional[int]:
+    pattern = re.compile(r"^(\d+)[ -_]?")
+    result = pattern.match(string)
+    if result:
+        try:
+            number = result.group(1)
+            number = int(number)
+            return number
+        except ValueError:
+            pass
+
+
+def specialised_levenshtein(token1: str, token2: str, ignored_affixes: Optional[Tuple[str, str]] = None) -> int:
+    """Find the Levenshtein distance between two strings, penalising operations involving digits x10"""
+    if ignored_affixes:
+        token1 = strip_affixes(token1, ignored_affixes)
+        token2 = strip_affixes(token2, ignored_affixes)
+    operations = Levenshtein.editops(token1, token2)
+    total_cost = 0
+    for operation in operations:
+        op, s1, s2 = operation
+        if s1 >= len(token1):
+            test1 = ""
+        else:
+            test1 = token1[s1]
+        if s2 >= len(token2):
+            test2 = ""
+        else:
+            test2 = token2[s2]
+        if any([re.match(r"\d", s) for s in (test1, test2)]):
+            total_cost += 10
+        else:
+            total_cost += 1
+    return total_cost
+
+
+def _get_album_narrator(album: Album):
+    return list(album.items())[0]["composer"]
+
+
 class Audible(BeetsPlugin):
     data_source = "Audible"
+    album_types = {
+        "narrator": types.STRING,
+    }
 
     def __init__(self):
         super().__init__()
 
         self.config.add(
             {
+                "chapter_matching_algorithms": [
+                    "single_file",
+                    "source_numbering",
+                    "starting_numbers",
+                    "natural_sort",
+                    "chapter_levenshtein",
+                ],
                 "fetch_art": True,
                 "match_chapters": True,
                 "source_weight": 0.0,
@@ -40,6 +191,8 @@ class Audible(BeetsPlugin):
         self.cover_art_urls = {}
         # stores paths of downloaded cover art to be used during import
         self.cover_art = {}
+
+        self.album_template_fields["narrator"] = _get_album_narrator
 
         self.register_listener("write", self.on_write)
         self.register_listener("import_task_files", self.on_import_task_files)
@@ -104,11 +257,113 @@ class Audible(BeetsPlugin):
         self.add_media_field("subtitle", subtitle)
 
     def album_distance(self, items, album_info, mapping):
-        dist = get_distance(data_source=self.data_source, info=album_info, config=self.config)
+        dist = beets.autotag.hooks.Distance()
         return dist
 
     def track_distance(self, item, track_info):
-        return get_distance(data_source=self.data_source, info=track_info, config=self.config)
+        dist = beets.autotag.hooks.Distance()
+        dist.add_string("track_title", item.title, track_info.title)
+        return dist
+
+    def attempt_match_trust_source_numbering(self, *args):
+        items, _ = args
+        sorted_tracks = sorted(items, key=lambda t: t.track)
+        if is_continuous_number_series([t.track for t in sorted_tracks]):
+            # if the track is zero indexed, re-number them
+            if sorted_tracks[0].track != 1:
+                matches = []
+                for i, item in enumerate(sorted_tracks, start=1):
+                    match = item
+                    match.track = i
+                    matches.append(match)
+            else:
+                matches = sorted_tracks
+            return matches
+
+    def attempt_match_starting_numbers(self, *args):
+        items, _ = args
+        affixes = find_regular_affixes([c.title for c in items])
+        stripped_titles = [strip_affixes(i.title, affixes) for i in items]
+
+        starting_numbers = [check_starts_with_number(s) for s in stripped_titles]
+        if all([s is not None for s in starting_numbers]) and is_continuous_number_series(sorted(starting_numbers)):
+            items_with_numbers = list(zip(starting_numbers, items))
+            matches = sorted(items_with_numbers, key=lambda i: i[0])
+            matches = [i[1] for i in matches]
+            return matches
+
+    def attempt_match_natsort(self, *args):
+        items, _ = args
+        affixes = find_regular_affixes([c.title for c in items])
+        stripped_titles = [strip_affixes(i.title, affixes) for i in items]
+        average_title_change = calculate_average_levenshtein_difference(stripped_titles)
+        # magic number here, it's a judgement call
+        if max(average_title_change) < 4:
+            # can't assume that the tracks actually match even when there are the same number of items, since lengths
+            # can be different e.g. an even split into n parts that aren't necessarily chapter-based so just natsort
+            matches = natsorted(items, key=lambda t: t.title)
+            return matches
+
+    def attempt_match_chapter_levenshtein(self, *args):
+        items, album = args
+        affixes = find_regular_affixes([c.title for c in items])
+
+        all_remote_chapters: List = deepcopy(album.tracks)
+        matches = []
+        for chapter in items:
+            # TODO: need a string distance algorithm that penalises number replacements more
+            best_matches = list(
+                sorted(
+                    all_remote_chapters,
+                    key=lambda c: specialised_levenshtein(chapter.title, c.title, affixes),
+                )
+            )
+            try:
+                best_match = best_matches[0]
+            except IndexError:
+                return None
+            matches.append(best_match)
+            all_remote_chapters.remove(best_match)
+        return matches
+
+    def attempt_match_single_item(self, *args):
+        items, album = args
+        if len(items) == 1:
+            # Prefer a single named book from the remote source
+            if len(album.tracks) == 1 and album.tracks[0].title != "Chapter 1":
+                matches = album.tracks
+            else:
+                matches = items
+            return matches
+
+    def sort_tracks(self, album: AlbumInfo, items: List[Item]) -> Optional[List[TrackInfo]]:
+        common_attrs = get_common_data_attributes(album.tracks[0])
+
+        # this is the master list of different approaches
+        # must be updated for any additional options added in the future
+        possible_matching_algorithms = {
+            "single_file": self.attempt_match_single_item,
+            "source_numbering": self.attempt_match_trust_source_numbering,
+            "starting_numbers": self.attempt_match_starting_numbers,
+            "natural_sort": self.attempt_match_natsort,
+            "chapter_levenshtein": self.attempt_match_chapter_levenshtein,
+        }
+        for algorithm_choice in self.config["chapter_matching_algorithms"]:
+            algorithm_choice = str(algorithm_choice)
+            if algorithm_choice not in possible_matching_algorithms:
+                self._log.error(
+                    f"'{algorithm_choice}' is not a valid algorithm choice for chapter matching; there are {len(possible_matching_algorithms.keys())}"
+                )
+                continue
+            function = possible_matching_algorithms[algorithm_choice]
+            matches = function(items, album)
+            if matches is not None:
+                tracks = convert_items_to_trackinfo(matches, common_attrs)
+                return tracks
+        # if len(items) > len(album.tracks):
+        #     # TODO: find a better way to handle this
+        #     # right now just reject this match
+        #     return None
 
     def candidates(self, items, artist, album, va_likely, extra_tags=None):
         """Returns a list of AlbumInfo objects for Audible search results
@@ -146,52 +401,8 @@ class Audible(BeetsPlugin):
         self._log.debug(f"Searching Audible for {query}")
         albums = self.get_albums(query)
         for a in albums:
-            is_chapter_data_accurate = a.is_chapter_data_accurate
-            punctuation = r"[^\w\s\d]"
-            # normalize by removing punctuation, converting to lowercase,
-            # as well as changing multiple consecutive spaces in the string to a single space
-            normalized_book_title = re.sub(punctuation, "", a.album.strip().lower())
-            normalized_book_title = " ".join(normalized_book_title.split())
-            normalized_album_name = re.sub(abridged_indicator, "", album.strip().lower())
-            normalized_album_name = re.sub(punctuation, "", normalized_album_name)
-
-            normalized_album_name = " ".join(normalized_album_name.split())
-            self._log.debug(f"Matching album name {normalized_album_name} with book title {normalized_book_title}")
-            # account for different length strings
-            is_likely_match = (
-                normalized_album_name in normalized_book_title or normalized_book_title in normalized_album_name
-            )
-            is_chapterized = len(a.tracks) == len(items)
-            # matching doesn't work well if the number of files in the album doesn't match the number of chapters
-            # As a workaround, return the same number of tracks as the number of files.
-            # This white lie is a workaround but works extraordinarily well
-            if self.config["match_chapters"] and is_likely_match and is_chapterized and not is_chapter_data_accurate:
-                # Logging this for now because this situation
-                # is technically possible (based on the API) but unsure how often it happens
-                self._log.warn(f"Chapter data for {a.album} could be inaccurate.")
-
-            if is_likely_match and (not is_chapterized or not self.config["match_chapters"]):
-                self._log.debug(
-                    f"Attempting to match book: album {album} with {len(items)} files"
-                    f" to book {a.album} with {len(a.tracks)} chapters."
-                )
-
-                common_track_attributes = dict(a.tracks[0])
-                del common_track_attributes["index"]
-                del common_track_attributes["length"]
-                del common_track_attributes["title"]
-
-                # Ignore existing track numbers, and instead sort based on file path
-                # Use natural sorting instead of lexigraphical to avoid this order:
-                # chapter 1, 10, 12, ..., 19, 2, etc
-                # This does work correctly when the album has multiple disks
-                # using the bytestring_path function from Beets is needed for correctness
-                # I was noticing inaccurate sorting if using str to convert paths to strings
-                naturally_sorted_items = os_sorted(items, key=lambda i: util.bytestring_path(i.path))
-                a.tracks = [
-                    TrackInfo(**common_track_attributes, title=item.title, length=item.length, index=i + 1)
-                    for i, item in enumerate(naturally_sorted_items)
-                ]
+            a.tracks = self.sort_tracks(a, items)
+        albums = list(filter(lambda a: a.tracks is not None, albums))
         return albums
 
     def get_album_from_yaml_metadata(self, data, items):
@@ -237,7 +448,7 @@ class Audible(BeetsPlugin):
             "subtitle": subtitle,
         }
 
-        naturally_sorted_items = os_sorted(items, key=lambda i: util.bytestring_path(i.path))
+        naturally_sorted_items = sort_items(items)
         # populate tracks by using some of the info from the files being imported
         tracks = [
             TrackInfo(
@@ -334,7 +545,7 @@ class Audible(BeetsPlugin):
             series_position = series.position
 
             title_cruft = f", Book {series_position}"
-            if not self.config['keep_series_reference_in_title'] and title.endswith(title_cruft):
+            if not self.config["keep_series_reference_in_title"] and title.endswith(title_cruft):
                 # check if ', Book X' is in title, remove it
                 self._log.debug(f"Title contains '{title_cruft}'. Removing it.")
                 title = title.removesuffix(title_cruft)
@@ -346,11 +557,16 @@ class Audible(BeetsPlugin):
                 album_sort = f"{series_name} - {title}"
                 content_group_description = None
 
-            #clean up subtitle
-            if not self.config['keep_series_reference_in_subtitle'] and subtitle and series_name.lower() in subtitle.lower() and 'book' in subtitle.lower():
-                #subtitle contains both the series name and the word "book"
-                #so it is likely just "Series, Book X" or "Book X in Series"
-                #don't include subtitle
+            # clean up subtitle
+            if (
+                not self.config["keep_series_reference_in_subtitle"]
+                and subtitle
+                and series_name.lower() in subtitle.lower()
+                and "book" in subtitle.lower()
+            ):
+                # subtitle contains both the series name and the word "book"
+                # so it is likely just "Series, Book X" or "Book X in Series"
+                # don't include subtitle
                 subtitle = None
                 self._log.debug(f"Subtitle of '{subtitle}' is mostly just the series name. Removing it.")
 
