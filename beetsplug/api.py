@@ -64,6 +64,12 @@ def make_request(url: str) -> bytes:
             if e.code == 404:
                 print(f"Error while requesting {url}: status code {e.code}, {e.reason}")
                 raise e
+            if e.code == 429:
+                reset_seconds = e.headers.get('retry-after')
+                if reset_seconds:
+                    reset_seconds = int(reset_seconds)
+                    print(f"got ratelimited, rate limit resets in {reset_seconds}, updating sleep duration")
+                    sleep_time = reset_seconds + 1
             print(f"Error while requesting {url}, attempt {n+1}/{num_retries}: status code {e.code}, {e.reason}")
             if n < num_retries - 1:
                 sleep(sleep_time)
