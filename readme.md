@@ -54,6 +54,8 @@ This Beets plugin solves both problems.
      write_description_file: true # output desc.txt
      write_reader_file: true # output reader.txt
 
+     region: us # region to get metadata from, can be omitted, "us" by default, but this can be switched on a book-by-book basis during import
+
    copyartifacts:
      extensions: .yml # so that metadata.yml is copied, see below
 

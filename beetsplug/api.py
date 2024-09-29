@@ -7,8 +7,8 @@ from urllib.error import HTTPError
 
 from .book import Book, BookChapters
 
-AUDIBLE_REGION = ("au", "ca", "de", "es", "fr", "in", "it", "jp", "us", "uk")
-AUDIBLE_ENDPOINT = {
+AUDIBLE_REGIONS = ("au", "ca", "de", "es", "fr", "in", "it", "jp", "us", "uk")
+AUDIBLE_ENDPOINTS = {
     "au": "https://api.audible.com.au/1.0/catalog/products",
     "ca": "https://api.audible.ca/1.0/catalog/products",
     "de": "https://api.audible.de/1.0/catalog/products",
@@ -36,7 +36,7 @@ def search_audible(keywords: str, region: str) -> Dict:
         "keywords": keywords,
     }
     query = parse.urlencode(params)
-    response = json.loads(make_request(f"{AUDIBLE_ENDPOINT[region]}?{query}"))
+    response = json.loads(make_request(f"{AUDIBLE_ENDPOINTS[region]}?{query}"))
     return response
 
 

@@ -7,12 +7,13 @@ from tempfile import NamedTemporaryFile
 
 import mediafile
 import yaml
-from beets import importer, util
+from beets import importer, util, ui
 from beets.autotag.hooks import AlbumInfo, TrackInfo
 from beets.plugins import BeetsPlugin, get_distance
+from beets.ui.commands import PromptChoice
 from natsort import os_sorted
 
-from .api import get_book_info, make_request, search_audible
+from .api import get_book_info, make_request, search_audible, AUDIBLE_REGIONS
 from .goodreads import get_original_date
 
 
@@ -44,6 +45,8 @@ class Audible(BeetsPlugin):
 
         self.register_listener("write", self.on_write)
         self.register_listener("import_task_files", self.on_import_task_files)
+        self.register_listener('before_choose_candidate',
+                               self.before_choose_candidate_event)
 
         if self.config["fetch_art"]:
             self.import_stages = [self.fetch_art]
@@ -294,7 +297,7 @@ class Audible(BeetsPlugin):
     def get_albums(self, query):
         """Returns a list of AlbumInfo objects for an Audible search query."""
         try:
-            results = search_audible(query, region=self.config['region'])
+            results = search_audible(query, region=self.config['region'].get())
         except Exception as e:
             self._log.warn("Could not connect to Audible API while searching for {0!r}", query, exc_info=True)
             return []
@@ -322,7 +325,7 @@ class Audible(BeetsPlugin):
 
     def get_album_info(self, asin):
         """Returns an AlbumInfo object for a book given its asin."""
-        (book, chapters) = get_book_info(asin, region=self.config['region'])
+        (book, chapters) = get_book_info(asin, region=self.config['region'].get())
 
         title = book.title
         subtitle = book.subtitle
@@ -521,3 +524,33 @@ class Audible(BeetsPlugin):
             narrator = item.composer
             with open(os.path.join(destination, b"reader.txt"), "w") as f:
                 f.write(narrator)
+
+    def before_choose_candidate_event(self, session, task):
+        return [PromptChoice('r', 'switch Region', self.switch_region)]
+
+    def switch_region(self, session, task):
+        available_region_codes = ', '.join(
+            (ui.colorize("added", reg) for reg in AUDIBLE_REGIONS)
+        )
+        current_region_code = self.config['region'].get()
+        message = (
+            f'Enter region code '
+            f'({available_region_codes}) '
+            f'[{current_region_code}]: '
+        )
+        
+        color_name = 'text'
+        region_code = ui.input_(message)
+        
+        if region_code in AUDIBLE_REGIONS:
+            self.config['region'] = region_code
+            if current_region_code != region_code:
+                color_name = 'changed'
+                current_region_code = region_code
+
+        ui.print_(
+            'Current region code:',
+            ui.colorize(color_name, current_region_code)
+        )
+
+        task.lookup_candidates()
