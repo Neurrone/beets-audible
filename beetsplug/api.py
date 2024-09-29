@@ -7,7 +7,19 @@ from urllib.error import HTTPError
 
 from .book import Book, BookChapters
 
-AUDIBLE_ENDPOINT = "https://api.audible.com/1.0/catalog/products"
+AUDIBLE_REGION = ("au", "ca", "de", "es", "fr", "in", "it", "jp", "us", "uk")
+AUDIBLE_ENDPOINT = {
+    "au": "https://api.audible.com.au/1.0/catalog/products",
+    "ca": "https://api.audible.ca/1.0/catalog/products",
+    "de": "https://api.audible.de/1.0/catalog/products",
+    "es": "https://api.audible.es/1.0/catalog/products",
+    "fr": "https://api.audible.fr/1.0/catalog/products",
+    "in": "https://api.audible.in/1.0/catalog/products",
+    "it": "https://api.audible.it/1.0/catalog/products",
+    "jp": "https://api.audible.co.jp/1.0/catalog/products",
+    "us": "https://api.audible.com/1.0/catalog/products",
+    "uk": "https://api.audible.co.uk/1.0/catalog/products"
+}
 AUDNEX_ENDPOINT = "https://api.audnex.us"
 GOODREADS_ENDPOINT = "https://www.goodreads.com/search/index.xml"
 USER_AGENT = (
@@ -16,7 +28,7 @@ USER_AGENT = (
 )
 
 
-def search_audible(keywords: str) -> Dict:
+def search_audible(keywords: str, region: str) -> Dict:
     params = {
         "response_groups": "contributors,product_attrs,product_desc,product_extended_attrs,series",
         "num_results": 10,
@@ -24,7 +36,7 @@ def search_audible(keywords: str) -> Dict:
         "keywords": keywords,
     }
     query = parse.urlencode(params)
-    response = json.loads(make_request(f"{AUDIBLE_ENDPOINT}?{query}"))
+    response = json.loads(make_request(f"{AUDIBLE_ENDPOINT[region]}?{query}"))
     return response
 
 
@@ -35,9 +47,11 @@ def search_goodreads(api_key: str, keywords: str) -> ET.Element:
     return ET.fromstring(make_request(url))
 
 
-def get_book_info(asin: str) -> Tuple[Book, BookChapters]:
-    book_response = json.loads(make_request(f"{AUDNEX_ENDPOINT}/books/{asin}"))
-    chapter_response = json.loads(make_request(f"{AUDNEX_ENDPOINT}/books/{asin}/chapters"))
+def get_book_info(asin: str, region: str) -> Tuple[Book, BookChapters]:
+    book_response = json.loads(make_request(
+        f"{AUDNEX_ENDPOINT}/books/{asin}?region={region}"))
+    chapter_response = json.loads(make_request(
+        f"{AUDNEX_ENDPOINT}/books/{asin}/chapters?region={region}"))
     book = Book.from_audnex_book(book_response)
     book_chapters = BookChapters.from_audnex_chapter_info(chapter_response)
     return book, book_chapters

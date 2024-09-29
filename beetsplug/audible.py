@@ -33,6 +33,7 @@ class Audible(BeetsPlugin):
                 "keep_series_reference_in_title": True,
                 "keep_series_reference_in_subtitle": True,
                 "goodreads_apikey": None,
+                "region": "us",
             }
         )
         self.config["goodreads_apikey"].redact = True
@@ -293,7 +294,7 @@ class Audible(BeetsPlugin):
     def get_albums(self, query):
         """Returns a list of AlbumInfo objects for an Audible search query."""
         try:
-            results = search_audible(query)
+            results = search_audible(query, region=self.config['region'])
         except Exception as e:
             self._log.warn("Could not connect to Audible API while searching for {0!r}", query, exc_info=True)
             return []
@@ -321,7 +322,7 @@ class Audible(BeetsPlugin):
 
     def get_album_info(self, asin):
         """Returns an AlbumInfo object for a book given its asin."""
-        (book, chapters) = get_book_info(asin)
+        (book, chapters) = get_book_info(asin, region=self.config['region'])
 
         title = book.title
         subtitle = book.subtitle
