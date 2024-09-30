@@ -49,9 +49,9 @@ def search_goodreads(api_key: str, keywords: str) -> ET.Element:
 
 def get_book_info(asin: str, region: str) -> Tuple[Book, BookChapters]:
     book_response = json.loads(make_request(
-        f"{AUDNEX_ENDPOINT}/books/{asin}?region={region}"))
+        f"{AUDNEX_ENDPOINT}/books/{asin}?region={region}&update=1"))
     chapter_response = json.loads(make_request(
-        f"{AUDNEX_ENDPOINT}/books/{asin}/chapters?region={region}"))
+        f"{AUDNEX_ENDPOINT}/books/{asin}/chapters?region={region}&update=1"))
     book = Book.from_audnex_book(book_response)
     book_chapters = BookChapters.from_audnex_chapter_info(chapter_response)
     return book, book_chapters
