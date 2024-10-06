@@ -1,3 +1,4 @@
+import tldextract
 import json
 import xml.etree.ElementTree as ET
 from time import sleep
@@ -7,7 +8,6 @@ from urllib.error import HTTPError
 
 from .book import Book, BookChapters
 
-AUDIBLE_REGIONS = ("au", "ca", "de", "es", "fr", "in", "it", "jp", "us", "uk")
 AUDIBLE_ENDPOINTS = {
     "au": "https://api.audible.com.au/1.0/catalog/products",
     "ca": "https://api.audible.ca/1.0/catalog/products",
@@ -20,6 +20,9 @@ AUDIBLE_ENDPOINTS = {
     "us": "https://api.audible.com/1.0/catalog/products",
     "uk": "https://api.audible.co.uk/1.0/catalog/products"
 }
+AUDIBLE_REGIONS = set(AUDIBLE_ENDPOINTS.keys())
+AUDIBLE_REGIONS_SUFFIXES = {k: tldextract.extract(v).suffix for k, v in AUDIBLE_ENDPOINTS.items()}
+AUDIBLE_SUFFIXES_REGIONS = {v: k for k, v in AUDIBLE_REGIONS_SUFFIXES.items()}
 AUDNEX_ENDPOINT = "https://api.audnex.us"
 GOODREADS_ENDPOINT = "https://www.goodreads.com/search/index.xml"
 USER_AGENT = (
@@ -56,6 +59,12 @@ def get_book_info(asin: str, region: str) -> Tuple[Book, BookChapters]:
     book_chapters = BookChapters.from_audnex_chapter_info(chapter_response)
     return book, book_chapters
 
+def get_audible_album_url(asin: str, region: str) -> str:
+    return f'https://www.audible.{AUDIBLE_REGIONS_SUFFIXES[region]}/pd/{asin}'
+
+def get_audible_album_region(url: str) -> str:
+    suffix = tldextract.extract(url).suffix
+    return AUDIBLE_SUFFIXES_REGIONS[suffix]
 
 def make_request(url: str) -> bytes:
     """Makes a request to the specified url and returns received response

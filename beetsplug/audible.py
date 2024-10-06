@@ -13,7 +13,8 @@ from beets.plugins import BeetsPlugin, get_distance
 from beets.ui.commands import PromptChoice
 from natsort import os_sorted
 
-from .api import get_book_info, make_request, search_audible, AUDIBLE_REGIONS
+from .api import get_book_info, make_request, search_audible
+from .api import AUDIBLE_REGIONS, get_audible_album_url
 from .goodreads import get_original_date
 
 
@@ -106,6 +107,14 @@ class Audible(BeetsPlugin):
             mediafile.ASFStorageStyle("WM/SubTitle"),
         )
         self.add_media_field("subtitle", subtitle)
+
+        album_url = mediafile.MediaField(
+            mediafile.MP3StorageStyle("WOAF"),
+            mediafile.MP4StorageStyle("----:com.apple.iTunes:WWWAUDIOFILE"),
+            mediafile.StorageStyle("WOAF"),
+            mediafile.ASFStorageStyle("WM/AudioFileURL"),
+        )
+        self.add_media_field("album_url", album_url)
 
     def album_distance(self, items, album_info, mapping):
         dist = get_distance(data_source=self.data_source, info=album_info, config=self.config)
@@ -239,6 +248,7 @@ class Audible(BeetsPlugin):
             "comments": description,
             "data_source": "YAML",
             "subtitle": subtitle,
+            "album_url": None,
         }
 
         naturally_sorted_items = os_sorted(items, key=lambda i: util.bytestring_path(i.path))
@@ -380,6 +390,8 @@ class Audible(BeetsPlugin):
         cover_url = book.image_url
         genres = "/".join([g.name for g in book.genres])
 
+        album_url = get_audible_album_url(asin, book.region)
+
         common_attributes = {
             "artist_id": None,
             "asin": asin,
@@ -393,6 +405,7 @@ class Audible(BeetsPlugin):
             "data_source": self.data_source,
             "subtitle": subtitle,
             "catalognum": asin,
+            "album_url": album_url,
         }
 
         tracks = [

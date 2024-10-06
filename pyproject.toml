@@ -13,6 +13,7 @@ packages = [{ include = "beetsplug" }]
 python = "^3.6"
 markdownify = "0.11.6"
 natsort = "8.2.0"
+tldextract = "5.1.2"
 
 [tool.poetry.dev-dependencies]
 beets = "1.6.0"
