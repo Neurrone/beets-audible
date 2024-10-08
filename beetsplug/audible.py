@@ -14,7 +14,7 @@ from beets.ui.commands import PromptChoice
 from natsort import os_sorted
 
 from .api import get_book_info, make_request, search_audible
-from .api import AUDIBLE_REGIONS, get_audible_album_url
+from .api import AUDIBLE_REGIONS, get_audible_album_url, get_audible_album_region
 from .goodreads import get_original_date
 
 
@@ -116,6 +116,9 @@ class Audible(BeetsPlugin):
         )
         self.add_media_field("album_url", album_url)
 
+        region = mediafile.MediaField()
+        self.add_media_field("region", region)
+
     def album_distance(self, items, album_info, mapping):
         dist = get_distance(data_source=self.data_source, info=album_info, config=self.config)
         return dist
@@ -139,6 +142,8 @@ class Audible(BeetsPlugin):
                 self._log.error("Error while reading data from metadata.yml", exc_info=True)
                 return []
 
+        region = get_item_region(items[0])
+
         if not album and not artist:
             folder_name = folder_path.name
             self._log.warn(f"Files missing album and artist tags. Attempting query based on folder name {folder_name}")
@@ -157,7 +162,7 @@ class Audible(BeetsPlugin):
         query = re.sub(abridged_indicator, "", query)
 
         self._log.debug(f"Searching Audible for {query}")
-        albums = self.get_albums(query)
+        albums = self.get_albums(query, region)
         for a in albums:
             is_chapter_data_accurate = a.is_chapter_data_accurate
             punctuation = r"[^\w\s\d]"
@@ -249,6 +254,7 @@ class Audible(BeetsPlugin):
             "data_source": "YAML",
             "subtitle": subtitle,
             "album_url": None,
+            "region": None,
         }
 
         naturally_sorted_items = os_sorted(items, key=lambda i: util.bytestring_path(i.path))
@@ -304,10 +310,13 @@ class Audible(BeetsPlugin):
             self._log.debug(f"Exception while getting book {asin}")
             return None
 
-    def get_albums(self, query):
+    def get_albums(self, query, region=None):
         """Returns a list of AlbumInfo objects for an Audible search query."""
+        if region is None:
+            region = self.config['region'].get()
+
         try:
-            results = search_audible(query, region=self.config['region'].get())
+            results = search_audible(query, region)
         except Exception as e:
             self._log.warn("Could not connect to Audible API while searching for {0!r}", query, exc_info=True)
             return []
@@ -325,7 +334,7 @@ class Audible(BeetsPlugin):
             out = []
             for p in products_without_unreleased_entries:
                 try:
-                    out.append(self.get_album_info(p["asin"]))
+                    out.append(self.get_album_info(p["asin"], region))
                 except urllib.error.HTTPError:
                     self._log.debug("Error while fetching book information from Audnex", exc_info=True)
             return out
@@ -333,9 +342,12 @@ class Audible(BeetsPlugin):
             self._log.warn("Error while fetching book information from Audnex", exc_info=True)
             return []
 
-    def get_album_info(self, asin):
+    def get_album_info(self, asin, region=None):
         """Returns an AlbumInfo object for a book given its asin."""
-        (book, chapters) = get_book_info(asin, region=self.config['region'].get())
+        if region is None:
+            region = self.config['region'].get()
+        
+        (book, chapters) = get_book_info(asin, region)
 
         title = book.title
         subtitle = book.subtitle
@@ -391,6 +403,7 @@ class Audible(BeetsPlugin):
         genres = "/".join([g.name for g in book.genres])
 
         album_url = get_audible_album_url(asin, book.region)
+        region = book.region
 
         common_attributes = {
             "artist_id": None,
@@ -406,6 +419,7 @@ class Audible(BeetsPlugin):
             "subtitle": subtitle,
             "catalognum": asin,
             "album_url": album_url,
+            "region": region,
         }
 
         tracks = [
@@ -539,9 +553,12 @@ class Audible(BeetsPlugin):
                 f.write(narrator)
 
     def before_choose_candidate_event(self, session, task):
-        return [PromptChoice('r', 'switch Region', self.switch_region)]
+        return [
+            PromptChoice('r', 'switch Region', self.switch_region_config),
+            PromptChoice('f', 'switch region For this book', self.switch_region_book)
+        ]
 
-    def switch_region(self, session, task):
+    def switch_region_config(self, session, task):
         available_region_codes = ', '.join(
             (ui.colorize("added", reg) for reg in AUDIBLE_REGIONS)
         )
@@ -567,3 +584,45 @@ class Audible(BeetsPlugin):
         )
 
         task.lookup_candidates()
+
+    def switch_region_book(self, session, task):
+        available_region_codes = ', '.join(
+            (ui.colorize("added", reg) for reg in AUDIBLE_REGIONS)
+        )
+
+        book_region_code = get_item_region(task.items[0])
+
+        if book_region_code is None:
+            current_region_code = self.config['region'].get()
+        else:
+            current_region_code = book_region_code
+        message = (
+            f'Enter region code '
+            f'({available_region_codes}) '
+            f'[{current_region_code}]: '
+        )
+        
+        color_name = 'text'
+        region_code = ui.input_(message)
+        
+        if region_code in AUDIBLE_REGIONS:
+            task.items[0]['region'] = region_code
+            if current_region_code != region_code:
+                color_name = 'changed'
+                current_region_code = region_code
+
+        ui.print_(
+            'Current region code:',
+            ui.colorize(color_name, current_region_code)
+        )
+
+        task.lookup_candidates()
+
+def get_item_region(item):
+    album_url = item['album_url']
+    region = item['region']
+    if region is not None:
+        result = region
+    else:
+        result = get_audible_album_region(album_url)
+    return result
