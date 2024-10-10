@@ -556,53 +556,11 @@ class Audible(BeetsPlugin):
 
     def before_choose_candidate_event(self, session, task):
         return [
-            PromptChoice('r', 'switch Region', self.switch_region_config),
-            PromptChoice('f', 'switch region For this book', self.switch_region_book)
+            PromptChoice('r', 'Region switch', self.book_level_region_switch)
         ]
 
-    # The configuration level switch may not be a good idea, as it may not work well with background processes.
-    def switch_region_config(self, session, task):
-        """Prompts the config level region value"""
-        available_region_codes = ', '.join(
-            (ui.colorize("added", reg) for reg in AUDIBLE_REGIONS)
-        )
-
-        # config level region code
-        current_config_region_code = self.config['region'].get()
-
-        # book level region code
-        book_region_code = get_item_region(task.items[0])
-        if book_region_code is None:
-            current_book_region_code = '--'
-        else:
-            current_book_region_code = book_region_code
-
-        message = (
-            f'Enter region code '
-            f'({available_region_codes}) '
-            f'[{current_config_region_code}]'
-            f'[{ui.colorize("text_faint", current_book_region_code)}] '
-            f'(config): '
-        )
-        
-        color_name = 'text'
-        region_code = ui.input_(message)
-        
-        if region_code in AUDIBLE_REGIONS:
-            self.config['region'] = region_code
-            if current_config_region_code != region_code:
-                color_name = 'changed'
-                current_config_region_code = region_code
-
-        ui.print_(
-            'Current config region code:',
-            ui.colorize(color_name, current_config_region_code)
-        )
-
-        task.lookup_candidates()
-
-    def switch_region_book(self, session, task):
-        """Prompts the book's level region value"""
+    def book_level_region_switch(self, session, task):
+        """Prompts the book level region value"""
         available_region_codes = ', '.join(
             (ui.colorize("added", reg) for reg in AUDIBLE_REGIONS)
         )
@@ -625,8 +583,7 @@ class Audible(BeetsPlugin):
             f'Enter region code '
             f'({available_region_codes}) '
             f'[{ui_current_config_region_code}]'
-            f'[{ui_current_book_region_code}] '
-            f'(book): '
+            f'[{ui_current_book_region_code}]: '
         )
         
         color_name = 'text'
@@ -639,11 +596,12 @@ class Audible(BeetsPlugin):
                 current_book_region_code = region_code
 
         ui.print_(
-            "Current book's region code:",
+            "Current book region code:",
             ui.colorize(color_name, current_book_region_code)
         )
 
         task.lookup_candidates()
+
 
 def get_item_region(item):
     """Get the value of the 'region' field, if it is available, or can be extracted from 'album_url'."""
