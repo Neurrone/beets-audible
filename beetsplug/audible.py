@@ -312,6 +312,8 @@ class Audible(BeetsPlugin):
 
     def get_albums(self, query, region=None):
         """Returns a list of AlbumInfo objects for an Audible search query."""
+
+        # The book level region has a higher priority than the config.
         if region is None:
             region = self.config['region'].get()
 
@@ -558,7 +560,9 @@ class Audible(BeetsPlugin):
             PromptChoice('f', 'switch region For this book', self.switch_region_book)
         ]
 
+    # The configuration level switch may not be a good idea, as it may not work well with background processes.
     def switch_region_config(self, session, task):
+        """Prompts the config level region value"""
         available_region_codes = ', '.join(
             (ui.colorize("added", reg) for reg in AUDIBLE_REGIONS)
         )
