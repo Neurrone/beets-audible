@@ -63,11 +63,12 @@ def get_audible_album_url(asin: str, region: str) -> str:
     return f'https://www.audible.{AUDIBLE_REGIONS_SUFFIXES[region]}/pd/{asin}'
 
 def get_audible_album_region(url: str) -> Optional[str]:
-    if url is None:
-        return None
-    else:
-        suffix = tldextract.extract(url).suffix
+    suffix = tldextract.extract(url).suffix
+    if suffix in AUDIBLE_SUFFIXES_REGIONS.keys():
         return AUDIBLE_SUFFIXES_REGIONS[suffix]
+    else:
+        return None
+
 
 def make_request(url: str) -> bytes:
     """Makes a request to the specified url and returns received response
