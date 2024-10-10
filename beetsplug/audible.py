@@ -623,10 +623,22 @@ class Audible(BeetsPlugin):
         task.lookup_candidates()
 
 def get_item_region(item):
-    album_url = item['album_url']
-    region = item['region']
+    """Get the value of the 'region' field, if it is available, or can be extracted from 'album_url'."""
+    available_field_names = item.keys()
+    album_url = None
+    region = None
+
+    if 'album_url' in available_field_names:
+        album_url = item['album_url']
+
+    if 'region' in available_field_names:
+        region = item['region']
+    
+    # The current value of the 'region' field takes precedence over the value extracted from the 'album_url' field.
     if region is not None:
         result = region
-    else:
+    elif album_url is not None:
         result = get_audible_album_region(album_url)
+    else:
+        result = None
     return result
