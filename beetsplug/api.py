@@ -59,8 +59,10 @@ def get_book_info(asin: str, region: str) -> Tuple[Book, BookChapters]:
     book_chapters = BookChapters.from_audnex_chapter_info(chapter_response)
     return book, book_chapters
 
+
 def get_audible_album_url(asin: str, region: str) -> str:
     return f'https://www.audible.{AUDIBLE_REGIONS_SUFFIXES[region]}/pd/{asin}'
+
 
 def get_audible_album_region(url: str) -> Optional[str]:
     suffix = tldextract.extract(url).suffix

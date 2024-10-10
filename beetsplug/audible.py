@@ -313,7 +313,7 @@ class Audible(BeetsPlugin):
     def get_albums(self, query, region=None):
         """Returns a list of AlbumInfo objects for an Audible search query."""
 
-        # The book level region has a higher priority than the config.
+        # The book level region has a higher priority than the config level.
         if region is None:
             region = self.config['region'].get()
 
@@ -346,6 +346,7 @@ class Audible(BeetsPlugin):
 
     def get_album_info(self, asin, region=None):
         """Returns an AlbumInfo object for a book given its asin."""
+
         if region is None:
             region = self.config['region'].get()
         
