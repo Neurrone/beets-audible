@@ -2,7 +2,7 @@ import tldextract
 import json
 import xml.etree.ElementTree as ET
 from time import sleep
-from typing import Dict, Tuple
+from typing import Dict, Tuple, Optional
 from urllib import parse, request
 from urllib.error import HTTPError
 
@@ -62,7 +62,7 @@ def get_book_info(asin: str, region: str) -> Tuple[Book, BookChapters]:
 def get_audible_album_url(asin: str, region: str) -> str:
     return f'https://www.audible.{AUDIBLE_REGIONS_SUFFIXES[region]}/pd/{asin}'
 
-def get_audible_album_region(url: str) -> str:
+def get_audible_album_region(url: str) -> Optional[str]:
     if url is None:
         return None
     else:
