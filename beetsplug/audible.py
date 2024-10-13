@@ -142,8 +142,6 @@ class Audible(BeetsPlugin):
                 self._log.error("Error while reading data from metadata.yml", exc_info=True)
                 return []
 
-        region = get_item_region(items[0])
-
         if not album and not artist:
             folder_name = folder_path.name
             self._log.warn(f"Files missing album and artist tags. Attempting query based on folder name {folder_name}")
@@ -161,7 +159,12 @@ class Audible(BeetsPlugin):
         abridged_indicator = r"(?i)\((unabridged|abridged)\)"
         query = re.sub(abridged_indicator, "", query)
 
-        self._log.debug(f"Searching Audible for {query}")
+        # The book level region has a higher priority than the config level.
+        region = get_item_region(items[0])
+        if region is None:
+            region = self.config['region'].get()
+
+        self._log.debug(f"Searching Audible for {query} in the '{region}' region")
         albums = self.get_albums(query, region)
         for a in albums:
             is_chapter_data_accurate = a.is_chapter_data_accurate
@@ -304,18 +307,14 @@ class Audible(BeetsPlugin):
         asin = album_id
         self._log.debug(f"Searching for book {asin}")
         try:
-            return self.get_album_info(asin)
+            return self.get_album_info(asin, self.config['region'].get())
         except Exception as E:
             # TODO: handle errors properly and distinguish between general errors and 404s
             self._log.debug(f"Exception while getting book {asin}")
             return None
 
-    def get_albums(self, query, region=None):
+    def get_albums(self, query, region):
         """Returns a list of AlbumInfo objects for an Audible search query."""
-
-        # The book level region has a higher priority than the config level.
-        if region is None:
-            region = self.config['region'].get()
 
         try:
             results = search_audible(query, region)
@@ -344,12 +343,9 @@ class Audible(BeetsPlugin):
             self._log.warn("Error while fetching book information from Audnex", exc_info=True)
             return []
 
-    def get_album_info(self, asin, region=None):
+    def get_album_info(self, asin, region):
         """Returns an AlbumInfo object for a book given its asin."""
 
-        if region is None:
-            region = self.config['region'].get()
-        
         (book, chapters) = get_book_info(asin, region)
 
         title = book.title
