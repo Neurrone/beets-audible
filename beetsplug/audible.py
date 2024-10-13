@@ -39,6 +39,8 @@ class Audible(BeetsPlugin):
             }
         )
         self.config["goodreads_apikey"].redact = True
+        # Check that a 'region' value in the config is one of the provided choices
+        self.config['region'].as_choice(AUDIBLE_REGIONS)
         # Mapping of asin to cover art urls
         self.cover_art_urls = {}
         # stores paths of downloaded cover art to be used during import
