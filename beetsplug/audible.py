@@ -615,7 +615,7 @@ def get_item_region(item):
         region = item['region']
     
     # The current value of the 'region' field takes precedence over the value extracted from the 'album_url' field.
-    if region is not None:
+    if (region is not None) and (region in AUDIBLE_REGIONS):
         result = region
     elif album_url is not None:
         result = get_audible_album_region(album_url)
