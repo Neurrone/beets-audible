@@ -561,7 +561,7 @@ class Audible(BeetsPlugin):
     def book_level_region_switch(self, session, task):
         """Prompts the book level region value"""
         available_region_codes = ', '.join(
-            (ui.colorize("added", reg) for reg in AUDIBLE_REGIONS)
+            (ui.colorize(UI_COLOR_NAMES["added"], reg) for reg in AUDIBLE_REGIONS)
         )
 
         # config level region code
@@ -571,12 +571,12 @@ class Audible(BeetsPlugin):
         book_region_code = get_item_region(task.items[0])
         if book_region_code is None:
             current_book_region_code = '--'
-            ui_current_config_region_code = ui.colorize("text", current_config_region_code)
-            ui_current_book_region_code = ui.colorize("text", current_book_region_code)
+            ui_current_config_region_code = ui.colorize(UI_COLOR_NAMES["text"], current_config_region_code)
+            ui_current_book_region_code = ui.colorize(UI_COLOR_NAMES["text"], current_book_region_code)
         else:
             current_book_region_code = book_region_code
-            ui_current_config_region_code = ui.colorize("text_faint", current_config_region_code)
-            ui_current_book_region_code = ui.colorize("text", current_book_region_code)
+            ui_current_config_region_code = ui.colorize(UI_COLOR_NAMES["text_faint"], current_config_region_code)
+            ui_current_book_region_code = ui.colorize(UI_COLOR_NAMES["text"], current_book_region_code)
 
         message = (
             f'Enter region code '
@@ -585,13 +585,13 @@ class Audible(BeetsPlugin):
             f'[{ui_current_book_region_code}]: '
         )
         
-        color_name = 'text'
+        color_name = UI_COLOR_NAMES["text"]
         region_code = ui.input_(message)
         
         if region_code in AUDIBLE_REGIONS:
             task.items[0]['region'] = region_code
             if current_book_region_code != region_code:
-                color_name = 'changed'
+                color_name = UI_COLOR_NAMES["changed"]
                 current_book_region_code = region_code
 
         ui.print_(
@@ -622,3 +622,12 @@ def get_item_region(item):
     else:
         result = None
     return result
+
+
+# UI color names fallbacks.
+UI_COLOR_NAMES = {
+    "added": "added" if "added" in ui.COLOR_NAMES else "darkgreen",
+    "text": "text" if "text" in ui.COLOR_NAMES else "lightgray",
+    "text_faint": "text_faint" if "text_faint" in ui.COLOR_NAMES else "darkgray",
+    "changed": "changed" if "changed" in ui.COLOR_NAMES else "darkyellow",
+}
