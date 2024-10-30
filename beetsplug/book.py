@@ -75,6 +75,7 @@ class Book:
     summary_markdown: str
     tags: List[Tag]  # may be an empty list
     title: str
+    region: Optional[str]
 
     def __init__(
         self,
@@ -95,6 +96,7 @@ class Book:
         summary_markdown,
         tags,
         title,
+        region,
     ):
         self.asin = asin
         self.authors = authors
@@ -113,7 +115,7 @@ class Book:
         self.summary_markdown = summary_markdown
         self.tags = tags
         self.title = title
-        self.title = title
+        self.region = region
 
     @staticmethod
     def from_audnex_book(b: Dict):
@@ -163,6 +165,7 @@ class Book:
                 if g["type"] == "tag"
             ],
             title=b["title"],
+            region=b["region"],
         )
 
 
