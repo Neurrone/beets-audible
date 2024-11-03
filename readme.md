@@ -14,6 +14,8 @@ This Beets plugin solves both problems.
 
 ## Installation
 
+To run from source, see [development setup](development.md)
+
 1. Install via pip: `pip install beets-audible beets-copyartifacts3` (copyartifacts is optional but recommended). See the next section instead if you're running Beets in Docker (highly recommended as it makes it easier to maintain a separate Beets installation dedicated to audiobooks).
 2. Use a separate beets config and database for managing audiobooks. This is the recommended Beets config for this plugin:
 
@@ -50,13 +52,10 @@ This Beets plugin solves both problems.
      include_narrator_in_artists: true # include author and narrator in artist tag. Or just author
      keep_series_reference_in_title: true # set to false to remove ", Book X" from end of titles
      keep_series_reference_in_subtitle: true # set to false to remove subtitle if it contains the series name and the word book ex. "Book 1 in Great Series", "Great Series, Book 1"
-
      write_description_file: true # output desc.txt
      write_reader_file: true # output reader.txt
-     
      region: us # the region from which to obtain metadata can be omitted, by default it is "us"
                 # pick one of the available values: au, ca, de, es, fr, in, it, jp, us, uk
-
                 # the region value can be set for each book individually during import/re-import
                 # also it is automatically derived from 'WOAF' (WWWAUDIOFILE) tag
                 # which may contain a URL such as 'https://www.audible.com/pd/ASINSTRING' or 'audible.com'
