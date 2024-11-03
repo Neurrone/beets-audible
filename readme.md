@@ -88,7 +88,7 @@ To run from source, see [development setup](development.md)
    version: "3"
    services:
      beets:
-       image: lscr.io/linuxserver/beets:1.6.0-ls180
+       image: lscr.io/linuxserver/beets:2.0.0
        container_name: beets
        environment:
          # Update as needed
