@@ -2,7 +2,7 @@
 #    uv pip compile pyproject.toml -o requirements.txt
 beautifulsoup4==4.12.3
     # via markdownify
-beets==1.6.0
+beets==2.0.0
     # via beets-audible (pyproject.toml)
 certifi==2024.8.30
     # via requests
@@ -18,7 +18,7 @@ idna==3.10
     #   tldextract
 jellyfish==1.1.0
     # via beets
-markdownify==0.11.6
+markdownify==0.13.1
     # via beets-audible (pyproject.toml)
 mediafile==0.12.0
     # via beets
@@ -28,7 +28,7 @@ musicbrainzngs==0.7.1
     # via beets
 mutagen==1.47.0
     # via mediafile
-natsort==8.2.0
+natsort==8.4.0
     # via beets-audible (pyproject.toml)
 pyyaml==6.0.2
     # via
@@ -48,6 +48,8 @@ soupsieve==2.6
     # via beautifulsoup4
 tldextract==5.1.2
     # via beets-audible (pyproject.toml)
+typing-extensions==4.12.2
+    # via beets
 unidecode==1.3.8
     # via beets
 urllib3==2.2.3
