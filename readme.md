@@ -41,7 +41,7 @@ To run from source, see [development setup](development.md)
 
    # disables musicbrainz lookup, as it doesn't help for audiobooks
    musicbrainz:
-     host: localhost:5123
+     enabled: no
 
    audible:
      # if the number of files in the book is the same as the number of chapters from Audible,
