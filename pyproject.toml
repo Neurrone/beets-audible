@@ -1,6 +1,6 @@
 [project]
 name = "beets-audible"
-version = "0.1.0"
+version = "1.0.0"
 description = "Beets plugin for audiobook management"
 authors = [
     { name = "Dickson Tan", email = "dickson.tan.2013@gmail.com" }
@@ -21,7 +21,6 @@ classifiers = [
   "Programming Language :: Python :: Implementation :: CPython",
 ]
 readme = "readme.md"
-repository = "https://github.com/Neurrone/beets-audible"
 requires-python = ">=3.8"
 
 dependencies = [
@@ -45,3 +44,10 @@ line-length = 120
 profile = "black"
 multi_line_output = 3
 line_length = 120
+
+[project.urls]
+Homepage = "https://github.com/Neurrone/beets-audible"
+Documentation = "https://github.com/Neurrone/beets-audible"
+Repository = "https://github.com/Neurrone/beets-audible"
+Issues = "https://github.com/Neurrone/beets-audible/issues"
+Changelog = "https://github.com/Neurrone/beets-audible/blob/main/CHANGELOG.md"
