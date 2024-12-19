@@ -2,6 +2,12 @@
 
 <!--next-version-placeholder-->
 
+## v1.0.1 (2024-12-19)
+
+### Fix
+
+- Loosen version constraints so that things like non-major Beets updates won't conflict with Beet-audible's dependency requirements
+
 ## v1.0.0 (2024-11-03)
 
 ### Breaking Changes
