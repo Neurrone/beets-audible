@@ -28,6 +28,7 @@ class Audible(BeetsPlugin):
             {
                 "fetch_art": True,
                 "match_chapters": True,
+                "keep_org_tracks": False,
                 "source_weight": 0.0,
                 "write_description_file": True,
                 "write_reader_file": True,
@@ -192,6 +193,10 @@ class Audible(BeetsPlugin):
                 # Logging this for now because this situation
                 # is technically possible (based on the API) but unsure how often it happens
                 self._log.warn(f"Chapter data for {a.album} could be inaccurate.")
+
+            if self.config["keep_org_tracks"]:
+                # If the user has set the keep_org_tracks option, don't modify the tracks
+                return albums
 
             if is_likely_match and (not is_chapterized or not self.config["match_chapters"]):
                 self._log.debug(
