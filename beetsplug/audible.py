@@ -111,7 +111,8 @@ class Audible(BeetsPlugin):
         self.add_media_field("subtitle", subtitle)
 
         album_url = mediafile.MediaField(
-            mediafile.MP3StorageStyle("WOAF"),
+            # disable reading / writing of WOAF for mp3, see https://github.com/Neurrone/beets-audible/issues/71
+            # mediafile.MP3StorageStyle("WOAF"),
             mediafile.MP4StorageStyle("----:com.apple.iTunes:WWWAUDIOFILE"),
             mediafile.StorageStyle("WOAF"),
             mediafile.ASFStorageStyle("WM/AudioFileURL"),

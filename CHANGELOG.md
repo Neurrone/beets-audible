@@ -1,6 +1,14 @@
 # Changelog
 
-<!--next-version-placeholder-->
+## v1.0.2 (2025-05-19)
+
+### Fix
+
+- Disable reading and writing of the `WOAF` tag for MP3 files to work around an [upstream bug in Beets](https://github.com/Neurrone/beets-audible/issues/71)
+
+### Dependencies
+
+- Bumped markdownify from 0.14 to be compatible with v1.x
 
 ## v1.0.1 (2024-12-19)
 
