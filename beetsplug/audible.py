@@ -503,7 +503,7 @@ class Audible(BeetsPlugin):
                 # Album already has art (probably a re-import); skip it.
                 return
 
-            if task.choice_flag not in (importer.action.APPLY, importer.action.RETAG):
+            if task.choice_flag not in (importer.Action.APPLY, importer.Action.RETAG):
                 return
 
             cover_url = self.cover_art_urls.get(task.album.asin)
