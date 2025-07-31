@@ -36,6 +36,7 @@ class Audible(BeetsPlugin):
                 "keep_series_reference_in_subtitle": True,
                 "goodreads_apikey": None,
                 "region": "us",
+                "check_updates": True,
             }
         )
         self.config["goodreads_apikey"].redact = True
@@ -166,8 +167,10 @@ class Audible(BeetsPlugin):
         if region is None:
             region = self.config['region'].get()
 
-        self._log.debug(f"Searching Audible for {query} in the '{region}' region")
-        albums = self.get_albums(query, region)
+        check_updates = self.config['check_updates']
+
+        self._log.debug(f"Searching Audible for {query} in the '{region}' region (check_updates={check_updates})")
+        albums = self.get_albums(query, region, check_updates)
         for a in albums:
             is_chapter_data_accurate = a.is_chapter_data_accurate
             punctuation = r"[^\w\s\d]"
@@ -307,15 +310,17 @@ class Audible(BeetsPlugin):
         or None if the book was not found.
         """
         asin = album_id
+        region = self.config['region'].get()
+        check_updates = self.config['check_updates']
         self._log.debug(f"Searching for book {asin}")
         try:
-            return self.get_album_info(asin, self.config['region'].get())
+            return self.get_album_info(asin, region, check_updates)
         except Exception as E:
             # TODO: handle errors properly and distinguish between general errors and 404s
             self._log.debug(f"Exception while getting book {asin}")
             return None
 
-    def get_albums(self, query, region):
+    def get_albums(self, query, region, check_updates):
         """Returns a list of AlbumInfo objects for an Audible search query."""
 
         try:
@@ -337,7 +342,7 @@ class Audible(BeetsPlugin):
             out = []
             for p in products_without_unreleased_entries:
                 try:
-                    out.append(self.get_album_info(p["asin"], region))
+                    out.append(self.get_album_info(p["asin"], region, check_updates))
                 except urllib.error.HTTPError:
                     self._log.debug("Error while fetching book information from Audnex", exc_info=True)
             return out
@@ -345,10 +350,10 @@ class Audible(BeetsPlugin):
             self._log.warn("Error while fetching book information from Audnex", exc_info=True)
             return []
 
-    def get_album_info(self, asin, region):
+    def get_album_info(self, asin, region, update):
         """Returns an AlbumInfo object for a book given its asin."""
 
-        (book, chapters) = get_book_info(asin, region)
+        (book, chapters) = get_book_info(asin, region, update)
 
         title = book.title
         subtitle = book.subtitle
@@ -584,10 +589,10 @@ class Audible(BeetsPlugin):
             f'[{ui_current_config_region_code}]'
             f'[{ui_current_book_region_code}]: '
         )
-        
+
         color_name = UI_COLOR_NAMES["text"]
         region_code = ui.input_(message)
-        
+
         if region_code in AUDIBLE_REGIONS:
             task.items[0]['region'] = region_code
             if current_book_region_code != region_code:
@@ -613,7 +618,7 @@ def get_item_region(item):
 
     if 'region' in available_field_names:
         region = item['region']
-    
+
     # The current value of the 'region' field takes precedence over the value extracted from the 'album_url' field.
     if (region is not None) and (region in AUDIBLE_REGIONS):
         result = region
