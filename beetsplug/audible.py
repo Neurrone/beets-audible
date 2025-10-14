@@ -9,7 +9,7 @@ import mediafile
 import yaml
 from beets import importer, util, ui
 from beets.autotag.hooks import AlbumInfo, TrackInfo
-from beets.plugins import BeetsPlugin, get_distance
+from beets.metadata_plugins import MetadataSourcePlugin
 from beets.ui.commands import PromptChoice
 from natsort import os_sorted
 
@@ -17,8 +17,7 @@ from .api import get_book_info, make_request, search_audible
 from .api import AUDIBLE_REGIONS, get_audible_album_url, get_audible_album_region
 from .goodreads import get_original_date
 
-
-class Audible(BeetsPlugin):
+class Audible(MetadataSourcePlugin):
     data_source = "Audible"
 
     def __init__(self):
@@ -28,7 +27,7 @@ class Audible(BeetsPlugin):
             {
                 "fetch_art": True,
                 "match_chapters": True,
-                "source_weight": 0.0,
+                "data_source_mismatch_penalty": 0.0,
                 "write_description_file": True,
                 "write_reader_file": True,
                 "include_narrator_in_artists": True,
@@ -122,14 +121,7 @@ class Audible(BeetsPlugin):
         region = mediafile.MediaField()
         self.add_media_field("region", region)
 
-    def album_distance(self, items, album_info, mapping):
-        dist = get_distance(data_source=self.data_source, info=album_info, config=self.config)
-        return dist
-
-    def track_distance(self, item, track_info):
-        return get_distance(data_source=self.data_source, info=track_info, config=self.config)
-
-    def candidates(self, items, artist, album, va_likely, extra_tags=None):
+    def candidates(self, items, artist, album, va_likely):
         """Returns a list of AlbumInfo objects for Audible search results
         matching an album and artist (if not various).
         """
@@ -478,6 +470,18 @@ class Audible(BeetsPlugin):
             **common_attributes,
         )
 
+    def track_for_id(self, track_id: str):
+        self._log.debug("Searching for track {}", track_id)
+        return None
+
+    def item_candidates(self, item, artist, title):
+        """Returns a list of TrackInfo objects for individual track search.
+
+        Audiobooks are not searched by individual tracks, so this returns an empty list.
+        """
+        self._log.warn("item_candidates returning empty list since searching for specific tracks in audiobooks doesn't make sense")
+        return []
+
     @staticmethod
     def on_write(item, path, tags):
         # Strip unwanted tags that Beets automatically adds
@@ -504,7 +508,7 @@ class Audible(BeetsPlugin):
                 # Album already has art (probably a re-import); skip it.
                 return
 
-            if task.choice_flag not in (importer.action.APPLY, importer.action.RETAG):
+            if task.choice_flag not in (importer.Action.APPLY, importer.Action.RETAG):
                 return
 
             cover_url = self.cover_art_urls.get(task.album.asin)
@@ -562,7 +566,7 @@ class Audible(BeetsPlugin):
     def book_level_region_switch(self, session, task):
         """Prompts the book level region value"""
         available_region_codes = ', '.join(
-            (ui.colorize(UI_COLOR_NAMES["added"], reg) for reg in AUDIBLE_REGIONS)
+            (ui.colorize("text_diff_added", reg) for reg in AUDIBLE_REGIONS)
         )
 
         # config level region code
@@ -572,12 +576,12 @@ class Audible(BeetsPlugin):
         book_region_code = get_item_region(task.items[0])
         if book_region_code is None:
             current_book_region_code = '--'
-            ui_current_config_region_code = ui.colorize(UI_COLOR_NAMES["text"], current_config_region_code)
-            ui_current_book_region_code = ui.colorize(UI_COLOR_NAMES["text"], current_book_region_code)
+            ui_current_config_region_code = ui.colorize("text_highlight_minor", current_config_region_code)
+            ui_current_book_region_code = ui.colorize("text_highlight_minor", current_book_region_code)
         else:
             current_book_region_code = book_region_code
-            ui_current_config_region_code = ui.colorize(UI_COLOR_NAMES["text_faint"], current_config_region_code)
-            ui_current_book_region_code = ui.colorize(UI_COLOR_NAMES["text"], current_book_region_code)
+            ui_current_config_region_code = ui.colorize("text_faint", current_config_region_code)
+            ui_current_book_region_code = ui.colorize("text_highlight_minor", current_book_region_code)
 
         message = (
             f'Enter region code '
@@ -586,13 +590,13 @@ class Audible(BeetsPlugin):
             f'[{ui_current_book_region_code}]: '
         )
         
-        color_name = UI_COLOR_NAMES["text"]
+        color_name = "text_highlight_minor"
         region_code = ui.input_(message)
         
         if region_code in AUDIBLE_REGIONS:
             task.items[0]['region'] = region_code
             if current_book_region_code != region_code:
-                color_name = UI_COLOR_NAMES["changed"]
+                color_name = "changed"
                 current_book_region_code = region_code
 
         ui.print_(
@@ -623,12 +627,3 @@ def get_item_region(item):
     else:
         result = None
     return result
-
-
-# UI color names fallbacks.
-UI_COLOR_NAMES = {
-    "added": "added" if "added" in ui.COLOR_NAMES else "darkgreen",
-    "text": "text" if "text" in ui.COLOR_NAMES else "lightgray",
-    "text_faint": "text_faint" if "text_faint" in ui.COLOR_NAMES else "darkgray",
-    "changed": "changed" if "changed" in ui.COLOR_NAMES else "darkyellow",
-}

@@ -1,5 +1,16 @@
 # Changelog
 
+## v1.1.0 (2025-10-14)
+
+### Breaking Changes
+
+- Bump Beets version requirement to v2.5.x instead of 2.x, since Beets makes breaking changes even for minor releases
+- Bump minimum Python requirement to 3.9 to match Beets
+
+### Fix
+
+- Account for breaking changes in Beets 2.5.0
+
 ## v1.0.2 (2025-05-19)
 
 ### Fix

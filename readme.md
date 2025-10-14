@@ -47,7 +47,7 @@ To run from source, see [development setup](development.md)
      # if the number of files in the book is the same as the number of chapters from Audible,
      # attempt to match each file to an audible chapter
      match_chapters: true
-     source_weight: 0.0 # disable the source_weight penalty
+     data_source_mismatch_penalty: 0.0 # disable the data_source_mismatch penalty
      fetch_art: true # whether to retrieve cover art
      include_narrator_in_artists: true # include author and narrator in artist tag. Or just author
      keep_series_reference_in_title: true # set to false to remove ", Book X" from end of titles

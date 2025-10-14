@@ -1,6 +1,6 @@
 [project]
 name = "beets-audible"
-version = "1.0.2"
+version = "1.1.0"
 description = "Beets plugin for audiobook management"
 authors = [
     { name = "Dickson Tan", email = "dickson.tan.2013@gmail.com" }
@@ -21,10 +21,10 @@ classifiers = [
   "Programming Language :: Python :: Implementation :: CPython",
 ]
 readme = "readme.md"
-requires-python = ">=3.8"
+requires-python = ">=3.9"
 
 dependencies = [
-  "beets >=2,<3",
+  "beets >=2.5,<2.6",
   "markdownify >=1,<2",
   "natsort >=8,<9",
   "tldextract >=5,<6",
