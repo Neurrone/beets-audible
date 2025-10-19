@@ -88,8 +88,8 @@ To run from source, see [development setup](development.md)
    version: "3"
    services:
      beets:
-       image: lscr.io/linuxserver/beets:2.0.0
-       container_name: beets
+       image: lscr.io/linuxserver/beets:2.5.1-ls294
+       container_name: beets-audible
        environment:
          # Update as needed
          - PUID=1000
