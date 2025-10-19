@@ -16,14 +16,13 @@ This Beets plugin solves both problems.
 
 To run from source, see [development setup](development.md)
 
-1. Install via pip: `pip install beets-audible beets-copyartifacts3` (copyartifacts is optional but recommended). See the next section instead if you're running Beets in Docker (highly recommended as it makes it easier to maintain a separate Beets installation dedicated to audiobooks).
+1. Install via pip: `pip install beets-audible`. See the next section instead if you're running Beets in Docker (highly recommended as it makes it easier to maintain a separate Beets installation dedicated to audiobooks).
 2. Use a separate beets config and database for managing audiobooks. This is the recommended Beets config for this plugin:
 
    ```yaml
    # add audible to the list of plugins
-   # copyartifacts is optional but recommended if you're manually specifying metadata via metadata.yml, see the "Importing non-audible content" section
    # also add the "web" plugin if using the docker image
-   plugins: audible copyartifacts edit fromfilename scrub
+   plugins: audible edit fromfilename scrub
 
    directory: /audiobooks
 
@@ -60,9 +59,6 @@ To run from source, see [development setup](development.md)
                 # also it is automatically derived from 'WOAF' (WWWAUDIOFILE) tag
                 # which may contain a URL such as 'https://www.audible.com/pd/ASINSTRING' or 'audible.com'
    
-   copyartifacts:
-     extensions: .yml # so that metadata.yml is copied, see below
-
    scrub:
      auto: yes # optional, enabling this is personal preference
    ```
@@ -108,8 +104,7 @@ To run from source, see [development setup](development.md)
    ```sh
    #!/bin/bash
    echo "Installing dependencies..."
-   # copyartifacts is optional but recommended
-   pip install --no-cache-dir beets-audible beets-copyartifacts3
+   pip install --no-cache-dir beets-audible
    ```
 
 4. Spin up the container: `docker-compose up -d`
@@ -187,8 +182,6 @@ subtitle: "some subtitle"
 series: The Lord Of The Rings
 seriesPosition: "1-3"
 ```
-
-The copyartifacts plugin ensures that `metadata.yml` is copied over during the import, as it gets left in the source folder otherwise.
 
 ## Folder Structure
 
