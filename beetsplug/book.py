@@ -1,5 +1,5 @@
 import re
-from typing import Dict, List, Optional
+from typing import Optional
 
 from markdownify import markdownify as md
 
@@ -59,13 +59,13 @@ class Series:
 
 class Book:
     asin: str
-    authors: List[Author]
+    authors: list[Author]
     description: str
     format_type: str  # e.g, "unabridged"
-    genres: List[Genre]  # may be an empty list
+    genres: list[Genre]  # may be an empty list
     image_url: str
     language: str
-    narrators: List[Narrator]
+    narrators: list[Narrator]
     publisher: str
     release_date: str  # yyyy-mm-dd format
     runtime_length_min: int
@@ -73,7 +73,7 @@ class Book:
     subtitle: Optional[str]
     summary_html: str
     summary_markdown: str
-    tags: List[Tag]  # may be an empty list
+    tags: list[Tag]  # may be an empty list
     title: str
     region: Optional[str]
 
@@ -118,7 +118,7 @@ class Book:
         self.region = region
 
     @staticmethod
-    def from_audnex_book(b: Dict):
+    def from_audnex_book(b: dict):
         """
         Creates a `Book` from an Audnex book result
         """
@@ -186,7 +186,7 @@ class BookChapters:
     asin: str
     bran_intro_duration_ms: int
     brand_outro_duration_ms: int
-    chapters: List[Chapter]
+    chapters: list[Chapter]
     is_accurate: bool
     runtime_length_ms: int
     runtime_length_sec: int
@@ -210,7 +210,7 @@ class BookChapters:
         self.runtime_length_sec = runtime_length_sec
 
     @staticmethod
-    def from_audnex_chapter_info(c: Dict):
+    def from_audnex_chapter_info(c: dict):
         """
         Creates a `BookChapters` instance from audnex's /book/{asin}/chapters endpoint
         """

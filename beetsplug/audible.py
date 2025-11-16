@@ -3,19 +3,27 @@ import os
 import pathlib
 import re
 import urllib.error
+from contextlib import suppress
 from tempfile import NamedTemporaryFile
 
 import mediafile
 import yaml
-from beets import importer, util, ui
+from beets import importer, ui, util
 from beets.autotag.hooks import AlbumInfo, TrackInfo
 from beets.metadata_plugins import MetadataSourcePlugin
 from beets.ui.commands import PromptChoice
 from natsort import os_sorted
 
-from .api import get_book_info, make_request, search_audible
-from .api import AUDIBLE_REGIONS, get_audible_album_url, get_audible_album_region
+from .api import (
+    AUDIBLE_REGIONS,
+    get_audible_album_region,
+    get_audible_album_url,
+    get_book_info,
+    make_request,
+    search_audible,
+)
 from .goodreads import get_original_date
+
 
 class Audible(MetadataSourcePlugin):
     data_source = "Audible"
@@ -39,7 +47,7 @@ class Audible(MetadataSourcePlugin):
         )
         self.config["goodreads_apikey"].redact = True
         # Check that a 'region' value in the config is one of the provided choices
-        self.config['region'].as_choice(AUDIBLE_REGIONS)
+        self.config["region"].as_choice(AUDIBLE_REGIONS)
         # Mapping of asin to cover art urls
         self.cover_art_urls = {}
         # stores paths of downloaded cover art to be used during import
@@ -48,8 +56,7 @@ class Audible(MetadataSourcePlugin):
         self.register_listener("write", self.on_write)
         self.register_listener("import_task_files", self.on_import_task_files)
         self.register_listener("import_task_created", self.on_import_task_created)
-        self.register_listener('before_choose_candidate',
-                               self.before_choose_candidate_event)
+        self.register_listener("before_choose_candidate", self.before_choose_candidate_event)
 
         if self.config["fetch_art"]:
             self.import_stages = [self.fetch_art]
@@ -137,7 +144,7 @@ class Audible(MetadataSourcePlugin):
                 with open(str(yml_metadata_file_path)) as f:
                     data = yaml.load(f, Loader=yaml.SafeLoader)
                     return [self.get_album_from_yaml_metadata(data, items)]
-            except Exception as e:
+            except Exception:
                 self._log.error("Error while reading data from metadata.yml", exc_info=True)
                 return []
 
@@ -147,9 +154,7 @@ class Audible(MetadataSourcePlugin):
             query = folder_name
         else:
             if va_likely:
-                query = album
-            else:
-                query = f"{album} {artist}"
+                query = album if va_likely else f"{album} {artist}"
 
         # Strip medium information from query, Things like "CD1" and "disk 1"
         # can also negate an otherwise positive result.
@@ -161,7 +166,7 @@ class Audible(MetadataSourcePlugin):
         # The book level region has a higher priority than the config level.
         region = get_item_region(items[0])
         if region is None:
-            region = self.config['region'].get()
+            region = self.config["region"].get()
 
         self._log.debug(f"Searching Audible for {query} in the '{region}' region")
         albums = self.get_albums(query, region)
@@ -190,9 +195,7 @@ class Audible(MetadataSourcePlugin):
                 # is technically possible (based on the API) but unsure how often it happens
                 self._log.warn(f"Chapter data for {a.album} could be inaccurate.")
 
-            chapter_count_from_audible = self.maybe_align_tracks_with_items(
-                a, items, is_likely_match=is_likely_match
-            )
+            chapter_count_from_audible = self.maybe_align_tracks_with_items(a, items, is_likely_match=is_likely_match)
             if chapter_count_from_audible is not None:
                 self._log.debug(
                     f"Attempting to match book: album {album} with {len(items)} files"
@@ -251,10 +254,7 @@ class Audible(MetadataSourcePlugin):
         authors = ", ".join(data["authors"])
         narrators = ", ".join(data["narrators"])
         authors_and_narrators = ", ".join([authors, narrators])
-        if self.config["include_narrator_in_artists"]:
-            artists = authors_and_narrators
-        else:
-            artists = authors
+        artists = authors_and_narrators if self.config["include_narrator_in_artists"] else authors
 
         description = data["description"]
         genres = "/".join(data["genres"])
@@ -321,7 +321,7 @@ class Audible(MetadataSourcePlugin):
         asin = album_id
         self._log.debug(f"Searching for book {asin}")
         try:
-            info = self.get_album_info(asin, self.config['region'].get())
+            info = self.get_album_info(asin, self.config["region"].get())
             recent_items = self._recent_items
             if recent_items:
                 aligned = self.maybe_align_tracks_with_items(info, recent_items)
@@ -333,9 +333,9 @@ class Audible(MetadataSourcePlugin):
                         len(recent_items),
                     )
             return info
-        except Exception as E:
+        except Exception:
             # TODO: handle errors properly and distinguish between general errors and 404s
-            self._log.debug(f"Exception while getting book {asin}")
+            self._log.debug(f"Exception while getting book {asin}", exc_info=True)
             return None
 
     def get_albums(self, query, region):
@@ -343,7 +343,7 @@ class Audible(MetadataSourcePlugin):
 
         try:
             results = search_audible(query, region)
-        except Exception as e:
+        except Exception:
             self._log.warn("Could not connect to Audible API while searching for {0!r}", query, exc_info=True)
             return []
 
@@ -364,7 +364,7 @@ class Audible(MetadataSourcePlugin):
                 except urllib.error.HTTPError:
                     self._log.debug("Error while fetching book information from Audnex", exc_info=True)
             return out
-        except Exception as e:
+        except Exception:
             self._log.warn("Error while fetching book information from Audnex", exc_info=True)
             return []
 
@@ -384,7 +384,7 @@ class Audible(MetadataSourcePlugin):
             series_position = series.position
 
             title_cruft = f", Book {series_position}"
-            if not self.config['keep_series_reference_in_title'] and title.endswith(title_cruft):
+            if not self.config["keep_series_reference_in_title"] and title.endswith(title_cruft):
                 # check if ', Book X' is in title, remove it
                 self._log.debug(f"Title contains '{title_cruft}'. Removing it.")
                 title = title.removesuffix(title_cruft)
@@ -396,11 +396,16 @@ class Audible(MetadataSourcePlugin):
                 album_sort = f"{series_name} - {title}"
                 content_group_description = None
 
-            #clean up subtitle
-            if not self.config['keep_series_reference_in_subtitle'] and subtitle and series_name.lower() in subtitle.lower() and 'book' in subtitle.lower():
-                #subtitle contains both the series name and the word "book"
-                #so it is likely just "Series, Book X" or "Book X in Series"
-                #don't include subtitle
+            # clean up subtitle
+            if (
+                not self.config["keep_series_reference_in_subtitle"]
+                and subtitle
+                and series_name.lower() in subtitle.lower()
+                and "book" in subtitle.lower()
+            ):
+                # subtitle contains both the series name and the word "book"
+                # so it is likely just "Series, Book X" or "Book X in Series"
+                # don't include subtitle
                 subtitle = None
                 self._log.debug(f"Subtitle of '{subtitle}' is mostly just the series name. Removing it.")
 
@@ -417,10 +422,7 @@ class Audible(MetadataSourcePlugin):
         authors = ", ".join([a.name for a in book.authors])
         narrators = ", ".join([n.name for n in book.narrators])
         authors_and_narrators = ", ".join([authors, narrators])
-        if self.config["include_narrator_in_artists"]:
-            artists = authors_and_narrators
-        else:
-            artists = authors
+        artists = authors_and_narrators if self.config["include_narrator_in_artists"] else authors
 
         description = book.summary_markdown
         cover_url = book.image_url
@@ -464,7 +466,6 @@ class Audible(MetadataSourcePlugin):
         year = int(release_date[:4])
         month = int(release_date[5:7])
         day = int(release_date[8:10])
-        data_url = f"https://api.audnex.us/books/{asin}"
 
         self.cover_art_urls[asin] = cover_url
 
@@ -509,7 +510,9 @@ class Audible(MetadataSourcePlugin):
 
         Audiobooks are not searched by individual tracks, so this returns an empty list.
         """
-        self._log.warn("item_candidates returning empty list since searching for specific tracks in audiobooks doesn't make sense")
+        self._log.warn(
+            "item_candidates returning empty list since searching for specific tracks in audiobooks doesn't make sense"
+        )
         return []
 
     @staticmethod
@@ -525,11 +528,9 @@ class Audible(MetadataSourcePlugin):
             tags["itunes_media_type"] = 2
             if tags.get("series_name"):
                 tags["show_movement"] = 1
-            try:
+            with suppress(Exception):
                 # The "mvi" tag for m4b files only accepts integers
                 tags["mvi"] = int(tags.get("series_position"))
-            except Exception:
-                pass
 
     def fetch_art(self, session, task):
         # Only fetch art for albums
@@ -551,8 +552,10 @@ class Audible(MetadataSourcePlugin):
             try:
                 cover_path = self.fetch_image(cover_url)
                 self.cover_art[task] = cover_path
-            except Exception as e:
-                self._log.warn(f"Error while downloading cover art for {title} by {author} from {cover_url}: {e}")
+            except Exception:
+                self._log.warn(
+                    f"Error while downloading cover art for {title} by {author} from {cover_url}", exc_info=True
+                )
 
     def fetch_image(self, url):
         """Downloads an image from a URL and returns a path to the downloaded image."""
@@ -596,23 +599,19 @@ class Audible(MetadataSourcePlugin):
         self._recent_items = list(task.items)
 
     def before_choose_candidate_event(self, session, task):
-        return [
-            PromptChoice('r', 'Region switch', self.book_level_region_switch)
-        ]
+        return [PromptChoice("r", "Region switch", self.book_level_region_switch)]
 
     def book_level_region_switch(self, session, task):
         """Prompts the book level region value"""
-        available_region_codes = ', '.join(
-            (ui.colorize("text_diff_added", reg) for reg in AUDIBLE_REGIONS)
-        )
+        available_region_codes = ", ".join(ui.colorize("text_diff_added", reg) for reg in AUDIBLE_REGIONS)
 
         # config level region code
-        current_config_region_code = self.config['region'].get()
+        current_config_region_code = self.config["region"].get()
 
         # book level region code
         book_region_code = get_item_region(task.items[0])
         if book_region_code is None:
-            current_book_region_code = '--'
+            current_book_region_code = "--"
             ui_current_config_region_code = ui.colorize("text_highlight_minor", current_config_region_code)
             ui_current_book_region_code = ui.colorize("text_highlight_minor", current_book_region_code)
         else:
@@ -621,25 +620,22 @@ class Audible(MetadataSourcePlugin):
             ui_current_book_region_code = ui.colorize("text_highlight_minor", current_book_region_code)
 
         message = (
-            f'Enter region code '
-            f'({available_region_codes}) '
-            f'[{ui_current_config_region_code}]'
-            f'[{ui_current_book_region_code}]: '
+            f"Enter region code "
+            f"({available_region_codes}) "
+            f"[{ui_current_config_region_code}]"
+            f"[{ui_current_book_region_code}]: "
         )
-        
+
         color_name = "text_highlight_minor"
         region_code = ui.input_(message)
-        
+
         if region_code in AUDIBLE_REGIONS:
-            task.items[0]['region'] = region_code
+            task.items[0]["region"] = region_code
             if current_book_region_code != region_code:
                 color_name = "changed"
                 current_book_region_code = region_code
 
-        ui.print_(
-            "Current book region code:",
-            ui.colorize(color_name, current_book_region_code)
-        )
+        ui.print_("Current book region code:", ui.colorize(color_name, current_book_region_code))
 
         task.lookup_candidates()
 
@@ -650,12 +646,12 @@ def get_item_region(item):
     album_url = None
     region = None
 
-    if 'album_url' in available_field_names:
-        album_url = item['album_url']
+    if "album_url" in available_field_names:
+        album_url = item["album_url"]
 
-    if 'region' in available_field_names:
-        region = item['region']
-    
+    if "region" in available_field_names:
+        region = item["region"]
+
     # The current value of the 'region' field takes precedence over the value extracted from the 'album_url' field.
     if (region is not None) and (region in AUDIBLE_REGIONS):
         result = region

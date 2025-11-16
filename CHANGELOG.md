@@ -9,6 +9,7 @@
 ### Internal
 
 - Switch to using the uv build backend
+- Use Ruff for formatting and linting
 
 ## v1.1.0 (2025-10-14)
 

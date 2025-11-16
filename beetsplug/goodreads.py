@@ -1,17 +1,16 @@
-from typing import Dict
 from xml.etree.ElementTree import Element
 
 from .api import search_goodreads
 
 
-def get_original_date(self, asin: str, authors: str, title: str) -> Dict:
+def get_original_date(self, asin: str, authors: str, title: str) -> dict:
     api_key = self.config["goodreads_apikey"]
     goodreads_response = search_goodreads(api_key, asin)
     totalresults = goodreads_get_total_result(goodreads_response)
 
     if totalresults == 0:
         # search with author and title
-        self._log.debug(f"search Goodreads again based on author/title.")
+        self._log.debug("search Goodreads again based on author/title.")
         goodreads_response = search_goodreads(api_key, f"{authors} {title}")
         totalresults = goodreads_get_total_result(goodreads_response)
 
@@ -51,7 +50,7 @@ def goodreads_get_total_result(response: Element) -> int:
     return int(response.findtext("./search/total-results"))
 
 
-def parse_original_date(work: Element) -> Dict:
+def parse_original_date(work: Element) -> dict:
     original_date = {}
     if work is not None:
         year = work.findtext("original_publication_year")
