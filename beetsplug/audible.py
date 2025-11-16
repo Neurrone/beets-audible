@@ -47,6 +47,7 @@ class Audible(MetadataSourcePlugin):
 
         self.register_listener("write", self.on_write)
         self.register_listener("import_task_files", self.on_import_task_files)
+        self.register_listener("import_task_created", self.on_import_task_created)
         self.register_listener('before_choose_candidate',
                                self.before_choose_candidate_event)
 
@@ -121,10 +122,13 @@ class Audible(MetadataSourcePlugin):
         region = mediafile.MediaField()
         self.add_media_field("region", region)
 
+        self._recent_items = []
+
     def candidates(self, items, artist, album, va_likely):
         """Returns a list of AlbumInfo objects for Audible search results
         matching an album and artist (if not various).
         """
+        self._recent_items = list(items)
         folder_path = pathlib.Path(items[0].path.decode()).parent
         yml_metadata_file_path = folder_path / "metadata.yml"
         if yml_metadata_file_path.is_file():
@@ -186,29 +190,44 @@ class Audible(MetadataSourcePlugin):
                 # is technically possible (based on the API) but unsure how often it happens
                 self._log.warn(f"Chapter data for {a.album} could be inaccurate.")
 
-            if is_likely_match and (not is_chapterized or not self.config["match_chapters"]):
+            chapter_count_from_audible = self.maybe_align_tracks_with_items(
+                a, items, is_likely_match=is_likely_match
+            )
+            if chapter_count_from_audible is not None:
                 self._log.debug(
                     f"Attempting to match book: album {album} with {len(items)} files"
-                    f" to book {a.album} with {len(a.tracks)} chapters."
+                    f" to book {a.album} with {chapter_count_from_audible} chapters."
                 )
-
-                common_track_attributes = dict(a.tracks[0])
-                del common_track_attributes["index"]
-                del common_track_attributes["length"]
-                del common_track_attributes["title"]
-
-                # Ignore existing track numbers, and instead sort based on file path
-                # Use natural sorting instead of lexigraphical to avoid this order:
-                # chapter 1, 10, 12, ..., 19, 2, etc
-                # This does work correctly when the album has multiple disks
-                # using the bytestring_path function from Beets is needed for correctness
-                # I was noticing inaccurate sorting if using str to convert paths to strings
-                naturally_sorted_items = os_sorted(items, key=lambda i: util.bytestring_path(i.path))
-                a.tracks = [
-                    TrackInfo(**common_track_attributes, title=item.title, length=item.length, index=i + 1)
-                    for i, item in enumerate(naturally_sorted_items)
-                ]
         return albums
+
+    def maybe_align_tracks_with_items(self, album_info, items, *, is_likely_match=True):
+        """Override chapter data from Audible with the current file list when needed."""
+        if not is_likely_match or not items or not album_info.tracks:
+            return None
+
+        is_chapterized = len(album_info.tracks) == len(items)
+        if self.config["match_chapters"] and is_chapterized:
+            return None
+
+        chapter_count_from_audible = len(album_info.tracks)
+
+        common_track_attributes = dict(album_info.tracks[0])
+        del common_track_attributes["index"]
+        del common_track_attributes["length"]
+        del common_track_attributes["title"]
+
+        # Ignore existing track numbers, and instead sort based on file path
+        # Use natural sorting instead of lexigraphical to avoid this order:
+        # chapter 1, 10, 12, ..., 19, 2, etc
+        # This does work correctly when the album has multiple disks
+        # using the bytestring_path function from Beets is needed for correctness
+        # I was noticing inaccurate sorting if using str to convert paths to strings
+        naturally_sorted_items = os_sorted(items, key=lambda i: util.bytestring_path(i.path))
+        album_info.tracks = [
+            TrackInfo(**common_track_attributes, title=item.title, length=item.length, index=i + 1)
+            for i, item in enumerate(naturally_sorted_items)
+        ]
+        return chapter_count_from_audible
 
     def get_album_from_yaml_metadata(self, data, items):
         """Returns an `AlbumInfo` object by populating it with details from metadata.yml"""
@@ -302,7 +321,18 @@ class Audible(MetadataSourcePlugin):
         asin = album_id
         self._log.debug(f"Searching for book {asin}")
         try:
-            return self.get_album_info(asin, self.config['region'].get())
+            info = self.get_album_info(asin, self.config['region'].get())
+            recent_items = self._recent_items
+            if recent_items:
+                aligned = self.maybe_align_tracks_with_items(info, recent_items)
+                if aligned is not None:
+                    self._log.debug(
+                        "Matched ASIN %s with local files (%s chapters -> %s files)",
+                        asin,
+                        aligned,
+                        len(recent_items),
+                    )
+            return info
         except Exception as E:
             # TODO: handle errors properly and distinguish between general errors and 404s
             self._log.debug(f"Exception while getting book {asin}")
@@ -557,6 +587,13 @@ class Audible(MetadataSourcePlugin):
             narrator = item.composer
             with open(os.path.join(destination, b"reader.txt"), "w") as f:
                 f.write(narrator)
+
+    def on_import_task_created(self, session, task):
+        """
+        Remember the items for the current task so manual album ID lookups can align tracks.
+        This is needed because album_for_id doesn't give us the items being imported
+        """
+        self._recent_items = list(task.items)
 
     def before_choose_candidate_event(self, session, task):
         return [

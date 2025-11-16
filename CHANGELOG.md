@@ -2,6 +2,10 @@
 
 ## v1.2.0 (2025-11-16)
 
+### Fix
+
+- Entering an asin manually dring import now runs the chapter detection logic, preventing chapter mismatches from appearing
+
 ### Internal
 
 - Switch to using the uv build backend
