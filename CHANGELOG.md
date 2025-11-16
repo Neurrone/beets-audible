@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.2.0 (2025-11-16)
+
+### Internal
+
+- Switch to using the uv build backend
+
 ## v1.1.0 (2025-10-14)
 
 ### Breaking Changes
