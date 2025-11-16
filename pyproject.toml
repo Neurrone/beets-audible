@@ -1,6 +1,6 @@
 [project]
 name = "beets-audible"
-version = "1.2.0"
+version = "1.2.1"
 description = "Beets plugin for audiobook management"
 authors = [
     { name = "Dickson Tan", email = "dickson.tan.2013@gmail.com" }

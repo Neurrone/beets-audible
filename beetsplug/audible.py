@@ -153,8 +153,7 @@ class Audible(MetadataSourcePlugin):
             self._log.warn(f"Files missing album and artist tags. Attempting query based on folder name {folder_name}")
             query = folder_name
         else:
-            if va_likely:
-                query = album if va_likely else f"{album} {artist}"
+            query = album if va_likely else f"{album} {artist}"
 
         # Strip medium information from query, Things like "CD1" and "disk 1"
         # can also negate an otherwise positive result.

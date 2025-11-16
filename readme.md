@@ -53,12 +53,13 @@ To run from source, see [development setup](development.md)
      keep_series_reference_in_subtitle: true # set to false to remove subtitle if it contains the series name and the word book ex. "Book 1 in Great Series", "Great Series, Book 1"
      write_description_file: true # output desc.txt
      write_reader_file: true # output reader.txt
-     region: us # the region from which to obtain metadata can be omitted, by default it is "us"
-                # pick one of the available values: au, ca, de, es, fr, in, it, jp, us, uk
-                # the region value can be set for each book individually during import/re-import
-                # also it is automatically derived from 'WOAF' (WWWAUDIOFILE) tag
-                # which may contain a URL such as 'https://www.audible.com/pd/ASINSTRING' or 'audible.com'
-   
+     region:
+       us # the region from which to obtain metadata can be omitted, by default it is "us"
+       # pick one of the available values: au, ca, de, es, fr, in, it, jp, us, uk
+       # the region value can be set for each book individually during import/re-import
+       # also it is automatically derived from 'WOAF' (WWWAUDIOFILE) tag
+       # which may contain a URL such as 'https://www.audible.com/pd/ASINSTRING' or 'audible.com'
+
    scrub:
      auto: yes # optional, enabling this is personal preference
    ```
@@ -84,7 +85,7 @@ To run from source, see [development setup](development.md)
    version: "3"
    services:
      beets:
-       image: lscr.io/linuxserver/beets:2.5.1-ls294
+       image: lscr.io/linuxserver/beets:2.5.1-ls297
        container_name: beets-audible
        environment:
          # Update as needed
@@ -133,8 +134,8 @@ If you're not getting a match for a book, try the following:
 1. Check the tags on the files being imported. The album and artist tags should be set to the book title and author respectively.
 2. Press `E` when Beets prompts you about not being able to find a match. This prompts for the artist and album name. If the wrong book is being matched because there are other books with similar names on Audible, try using the audiobook's asin as the artist and title as the album.
 3. Switch Audible service region to obtain metadata from:
-    * Set `region` in the beets config.
-    * Press `R` to set region for a book when Beets prompts you about not being able to find a match or if it is incorrect.
+   - Set `region` in the beets config.
+   - Press `R` to set region for a book when Beets prompts you about not being able to find a match or if it is incorrect.
 4. Specify the book's data by using `metadata.yml` if it isn't on Audible (see the next section).
 
 The plugin gets chapter data of each book and tries to match them to the imported files if and only if the number of imported files is the same as the number of chapters from Audible. This can fail and cause inaccurate track assignments if the lengths of the files don't match Audible's chapter data. If this happens, set the config option `match_chapters` to `false` temporarily and try again, and remember to uncomment that line once done.

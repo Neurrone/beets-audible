@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.2.1 (2025-11-16)
+
+### Fix
+
+- Syntax error which broke the plugin when importing audiobooks
+
 ## v1.2.0 (2025-11-16)
 
 ### Fix
