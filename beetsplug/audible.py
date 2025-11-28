@@ -294,6 +294,8 @@ class Audible(MetadataSourcePlugin):
         language = data.get("language", "English")
         publisher = data["publisher"]
 
+        total_duration_seconds = sum(track.length for track in tracks)
+
         return AlbumInfo(
             tracks=tracks,
             album=title,
@@ -309,6 +311,7 @@ class Audible(MetadataSourcePlugin):
             original_day=day,
             language=language,
             label=publisher,
+            total_duration=ui.human_seconds_short(total_duration_seconds or 0.0),
             **common_attributes,
         )
 
@@ -479,6 +482,8 @@ class Audible(MetadataSourcePlugin):
                 original_month = original_date.get("month")
                 original_day = original_date.get("day")
 
+        total_duration_seconds = sum(track.length for track in tracks)
+
         return AlbumInfo(
             tracks=tracks,
             album=title,
@@ -497,6 +502,7 @@ class Audible(MetadataSourcePlugin):
             is_chapter_data_accurate=is_chapter_data_accurate,
             language=book.language,
             label=book.publisher,
+            total_duration=ui.human_seconds_short(total_duration_seconds or 0.0),
             **common_attributes,
         )
 
