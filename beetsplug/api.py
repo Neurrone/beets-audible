@@ -1,7 +1,6 @@
 import json
 import xml.etree.ElementTree as ET
 from time import sleep
-from typing import Optional
 from urllib import parse, request
 from urllib.error import HTTPError
 
@@ -63,7 +62,7 @@ def get_audible_album_url(asin: str, region: str) -> str:
     return f"https://www.audible.{AUDIBLE_REGIONS_SUFFIXES[region]}/pd/{asin}"
 
 
-def get_audible_album_region(url: str) -> Optional[str]:
+def get_audible_album_region(url: str) -> str | None:
     suffix = tldextract.extract(url).suffix
     if suffix in AUDIBLE_SUFFIXES_REGIONS:
         return AUDIBLE_SUFFIXES_REGIONS[suffix]

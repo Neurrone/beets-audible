@@ -1,5 +1,4 @@
 import re
-from typing import Optional
 
 from markdownify import markdownify as md
 
@@ -8,7 +7,7 @@ from markdownify import markdownify as md
 
 
 class Author:
-    asin: Optional[str]
+    asin: str | None
     name: str
 
     def __init__(self, asin, name):
@@ -49,7 +48,7 @@ class Series:
     asin: str
     name: str
     # Yes, sadly its possible for series to not have a position
-    position: Optional[str]  # e.g, "2", "8.5", "1-5"
+    position: str | None  # e.g, "2", "8.5", "1-5"
 
     def __init__(self, asin, name, position):
         self.asin = asin
@@ -69,13 +68,13 @@ class Book:
     publisher: str
     release_date: str  # yyyy-mm-dd format
     runtime_length_min: int
-    series: Optional[Series]
-    subtitle: Optional[str]
+    series: Series | None
+    subtitle: str | None
     summary_html: str
     summary_markdown: str
     tags: list[Tag]  # may be an empty list
     title: str
-    region: Optional[str]
+    region: str | None
 
     def __init__(
         self,
