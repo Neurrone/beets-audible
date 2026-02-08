@@ -55,6 +55,7 @@ dependencies = [
     { name = "beets" },
     { name = "confuse" },
     { name = "markdownify" },
+    { name = "mediafile" },
     { name = "natsort" },
     { name = "tldextract" },
 ]
@@ -71,6 +72,7 @@ requires-dist = [
     { name = "beets", specifier = ">=2.6.1,<2.7" },
     { name = "confuse", specifier = "<2.2" },
     { name = "markdownify", specifier = ">=1,<2" },
+    { name = "mediafile", specifier = "<0.14.0" },
     { name = "natsort", specifier = ">=8,<9" },
     { name = "pytest", marker = "extra == 'dev'", specifier = "==9.0.2" },
     { name = "responses", marker = "extra == 'dev'", specifier = ">=0.25.3,<0.26" },

@@ -4,7 +4,8 @@
 
 ### Fix
 
-- Require confuse<2.2 to work around error when running in Docker, see #84
+- Require `confuse<2.2` to work around error when running in Docker, see #84
+- Require `mediafile<0.14.0` to work around error when running in Docker, see #83
 
 ## v1.3.0 (2026-02-08)
 
