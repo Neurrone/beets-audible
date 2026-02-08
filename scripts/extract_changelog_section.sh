@@ -20,6 +20,7 @@ awk -v heading="$version_heading" '
   BEGIN {
     in_section = 0
     found = 0
+    started_output = 0
   }
   function is_target_heading(line, heading_text, next_char) {
     if (index(line, heading_text) != 1) {
@@ -34,11 +35,16 @@ awk -v heading="$version_heading" '
   is_target_heading($0, heading) {
     in_section = 1
     found = 1
+    next
   }
   /^## / && in_section && !is_target_heading($0, heading) {
     exit
   }
   in_section {
+    if (!started_output && $0 ~ /^[[:space:]]*$/) {
+      next
+    }
+    started_output = 1
     print
   }
   END {
