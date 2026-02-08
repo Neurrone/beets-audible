@@ -1,5 +1,17 @@
 # Changelog
 
+## v1.3.0 (2026-02-08)
+
+### Breaking Changes
+
+- Require Beets `>=2.6.1,<2.7`
+- Require Python `>=3.10`
+
+### Fix
+
+- Use the newly introduced `album_matched` event to align tracks for manual ASIN matches instead of relying on import-task state
+- Update use of deprecated Beets APIs (`PromptChoice` import path and logger warnings)
+
 ## v1.2.1 (2025-11-16)
 
 ### Fix

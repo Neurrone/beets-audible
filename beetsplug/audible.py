@@ -9,9 +9,11 @@ from tempfile import NamedTemporaryFile
 import mediafile
 import yaml
 from beets import importer, ui, util
+from beets.autotag.distance import distance
 from beets.autotag.hooks import AlbumInfo, TrackInfo
+from beets.autotag.match import assign_items
 from beets.metadata_plugins import MetadataSourcePlugin
-from beets.ui.commands import PromptChoice
+from beets.util import PromptChoice
 from natsort import os_sorted
 
 from .api import (
@@ -55,7 +57,7 @@ class Audible(MetadataSourcePlugin):
 
         self.register_listener("write", self.on_write)
         self.register_listener("import_task_files", self.on_import_task_files)
-        self.register_listener("import_task_created", self.on_import_task_created)
+        self.register_listener("album_matched", self.on_album_matched)
         self.register_listener("before_choose_candidate", self.before_choose_candidate_event)
 
         if self.config["fetch_art"]:
@@ -129,13 +131,10 @@ class Audible(MetadataSourcePlugin):
         region = mediafile.MediaField()
         self.add_media_field("region", region)
 
-        self._recent_items = []
-
     def candidates(self, items, artist, album, va_likely):
         """Returns a list of AlbumInfo objects for Audible search results
         matching an album and artist (if not various).
         """
-        self._recent_items = list(items)
         folder_path = pathlib.Path(items[0].path.decode()).parent
         yml_metadata_file_path = folder_path / "metadata.yml"
         if yml_metadata_file_path.is_file():
@@ -150,7 +149,9 @@ class Audible(MetadataSourcePlugin):
 
         if not album and not artist:
             folder_name = folder_path.name
-            self._log.warn(f"Files missing album and artist tags. Attempting query based on folder name {folder_name}")
+            self._log.warning(
+                f"Files missing album and artist tags. Attempting query based on folder name {folder_name}"
+            )
             query = folder_name
         else:
             query = album if va_likely else f"{album} {artist}"
@@ -192,7 +193,7 @@ class Audible(MetadataSourcePlugin):
             if self.config["match_chapters"] and is_likely_match and is_chapterized and not is_chapter_data_accurate:
                 # Logging this for now because this situation
                 # is technically possible (based on the API) but unsure how often it happens
-                self._log.warn(f"Chapter data for {a.album} could be inaccurate.")
+                self._log.warning(f"Chapter data for {a.album} could be inaccurate.")
 
             chapter_count_from_audible = self.maybe_align_tracks_with_items(a, items, is_likely_match=is_likely_match)
             if chapter_count_from_audible is not None:
@@ -320,18 +321,7 @@ class Audible(MetadataSourcePlugin):
         asin = album_id
         self._log.debug(f"Searching for book {asin}")
         try:
-            info = self.get_album_info(asin, self.config["region"].get())
-            recent_items = self._recent_items
-            if recent_items:
-                aligned = self.maybe_align_tracks_with_items(info, recent_items)
-                if aligned is not None:
-                    self._log.debug(
-                        "Matched ASIN %s with local files (%s chapters -> %s files)",
-                        asin,
-                        aligned,
-                        len(recent_items),
-                    )
-            return info
+            return self.get_album_info(asin, self.config["region"].get())
         except Exception:
             # TODO: handle errors properly and distinguish between general errors and 404s
             self._log.debug(f"Exception while getting book {asin}", exc_info=True)
@@ -343,7 +333,7 @@ class Audible(MetadataSourcePlugin):
         try:
             results = search_audible(query, region)
         except Exception:
-            self._log.warn("Could not connect to Audible API while searching for {0!r}", query, exc_info=True)
+            self._log.warning("Could not connect to Audible API while searching for {0!r}", query, exc_info=True)
             return []
 
         try:
@@ -364,7 +354,7 @@ class Audible(MetadataSourcePlugin):
                     self._log.debug("Error while fetching book information from Audnex", exc_info=True)
             return out
         except Exception:
-            self._log.warn("Error while fetching book information from Audnex", exc_info=True)
+            self._log.warning("Error while fetching book information from Audnex", exc_info=True)
             return []
 
     def get_album_info(self, asin, region):
@@ -509,7 +499,7 @@ class Audible(MetadataSourcePlugin):
 
         Audiobooks are not searched by individual tracks, so this returns an empty list.
         """
-        self._log.warn(
+        self._log.warning(
             "item_candidates returning empty list since searching for specific tracks in audiobooks doesn't make sense"
         )
         return []
@@ -552,7 +542,7 @@ class Audible(MetadataSourcePlugin):
                 cover_path = self.fetch_image(cover_url)
                 self.cover_art[task] = cover_path
             except Exception:
-                self._log.warn(
+                self._log.warning(
                     f"Error while downloading cover art for {title} by {author} from {cover_url}", exc_info=True
                 )
 
@@ -590,12 +580,23 @@ class Audible(MetadataSourcePlugin):
             with open(os.path.join(destination, b"reader.txt"), "w") as f:
                 f.write(narrator)
 
-    def on_import_task_created(self, session, task):
-        """
-        Remember the items for the current task so manual album ID lookups can align tracks.
-        This is needed because album_for_id doesn't give us the items being imported
-        """
-        self._recent_items = list(task.items)
+    def on_album_matched(self, match):
+        """Adjust final album matches to align tracks with imported files where needed."""
+        if match.info.data_source != self.data_source:
+            return
+
+        # AlbumMatch carries matched and unmatched items separately; use both so
+        # manual ASIN matches can align against the full import task.
+        all_items = match.items + match.extra_items
+        chapter_count_from_audible = self.maybe_align_tracks_with_items(match.info, all_items, is_likely_match=True)
+        if chapter_count_from_audible is None:
+            return
+
+        item_info_pairs, extra_items, extra_tracks = assign_items(all_items, match.info.tracks)
+        match.mapping = dict(item_info_pairs)
+        match.extra_items = extra_items
+        match.extra_tracks = extra_tracks
+        match.distance = distance(all_items, match.info, item_info_pairs)
 
     def before_choose_candidate_event(self, session, task):
         return [PromptChoice("r", "Region switch", self.book_level_region_switch)]
