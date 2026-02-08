@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.3.1 (2026-02-08)
+
+### Fix
+
+- Require confuse<2.2 to work around error when running in Docker, see #84
+
 ## v1.3.0 (2026-02-08)
 
 ### Breaking Changes

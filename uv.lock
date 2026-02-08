@@ -49,10 +49,11 @@ wheels = [
 
 [[package]]
 name = "beets-audible"
-version = "1.3"
+version = "1.3.0"
 source = { editable = "." }
 dependencies = [
     { name = "beets" },
+    { name = "confuse" },
     { name = "markdownify" },
     { name = "natsort" },
     { name = "tldextract" },
@@ -68,6 +69,7 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "beets", specifier = ">=2.6.1,<2.7" },
+    { name = "confuse", specifier = "<2.2" },
     { name = "markdownify", specifier = ">=1,<2" },
     { name = "natsort", specifier = ">=8,<9" },
     { name = "pytest", marker = "extra == 'dev'", specifier = "==9.0.2" },
