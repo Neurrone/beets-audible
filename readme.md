@@ -86,7 +86,7 @@ To run from source, see [development setup](development.md)
    services:
      beets:
        # pinning because of breaking changes in the lscr.io images even on the same minor version
-       image: lscr.io/linuxserver/beets:2.6.1-ls310
+       image: lscr.io/linuxserver/beets:2.7.1-ls319
        container_name: beets-audible
        environment:
          # Update as needed
