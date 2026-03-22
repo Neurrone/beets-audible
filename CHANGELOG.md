@@ -1,5 +1,15 @@
 # Changelog
 
+## v1.4.0 (2026-03-22)
+
+### Breaking Changes
+
+- Require Beets `>=2.7.1,<2.8`
+
+### Fix
+
+- Update Confuse to v2.2.0 to match the version Beets uses. Fixes #84
+
 ## v1.3.1 (2026-02-08)
 
 ### Fix

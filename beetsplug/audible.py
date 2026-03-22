@@ -257,14 +257,14 @@ class Audible(MetadataSourcePlugin):
         artists = authors_and_narrators if self.config["include_narrator_in_artists"] else authors
 
         description = data["description"]
-        genres = "/".join(data["genres"])
+        genres = data["genres"]
 
         common_attributes = {
             "artist_id": None,
             "album_sort": album_sort,
             "composer": narrators,
             "grouping": content_group_description,
-            "genre": genres,
+            "genres": genres,
             "series_name": series_name,
             "series_position": series_position,
             "comments": description,
@@ -415,7 +415,7 @@ class Audible(MetadataSourcePlugin):
 
         description = book.summary_markdown
         cover_url = book.image_url
-        genres = "/".join([g.name for g in book.genres])
+        genres = [g.name for g in book.genres]
 
         album_url = get_audible_album_url(asin, book.region)
         region = book.region
@@ -426,7 +426,7 @@ class Audible(MetadataSourcePlugin):
             "album_sort": album_sort,
             "composer": narrators,
             "grouping": content_group_description,
-            "genre": genres,
+            "genres": genres,
             "series_name": series_name,
             "series_position": series_position,
             "comments": description,

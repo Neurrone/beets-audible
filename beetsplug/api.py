@@ -20,7 +20,7 @@ AUDIBLE_ENDPOINTS = {
     "us": "https://api.audible.com/1.0/catalog/products",
     "uk": "https://api.audible.co.uk/1.0/catalog/products",
 }
-AUDIBLE_REGIONS = set(AUDIBLE_ENDPOINTS.keys())
+AUDIBLE_REGIONS = tuple(AUDIBLE_ENDPOINTS)
 AUDIBLE_REGIONS_SUFFIXES = {k: tldextract.extract(v).suffix for k, v in AUDIBLE_ENDPOINTS.items()}
 AUDIBLE_SUFFIXES_REGIONS = {v: k for k, v in AUDIBLE_REGIONS_SUFFIXES.items()}
 AUDNEX_ENDPOINT = "https://api.audnex.us"
