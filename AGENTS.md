@@ -18,7 +18,7 @@ Use uv for reproducible environments: `uv run beet -v version` verifies the plug
 
 ## Coding Style & Naming Conventions
 
-Target Python >=3.9. Follow Ruff formatting and linting defaults configured in `pyproject.toml` (including 120-char lines and import sorting). Prefer descriptive snake_case for functions and module-level constants in SHOUT_CASE; classes follow CapWords. Keep side effects near Beets hooks and isolate network or file IO in helper modules. Add concise docstrings for any public helper or integration boundary.
+Target Python >=3.10. Follow Ruff formatting and linting defaults configured in `pyproject.toml` (including 120-char lines and import sorting). Prefer descriptive snake_case for functions and module-level constants in SHOUT_CASE; classes follow CapWords. Keep side effects near Beets hooks and isolate network or file IO in helper modules. Add concise docstrings for any public helper or integration boundary.
 
 ## Architecture & Behaviors
 
