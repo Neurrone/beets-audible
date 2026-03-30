@@ -50,7 +50,7 @@ def goodreads_get_total_result(response: Element) -> int:
     return int(response.findtext("./search/total-results"))
 
 
-def parse_original_date(work: Element) -> dict:
+def parse_original_date(work: Element) -> dict[str, int | None]:
     original_date = {}
     if work is not None:
         year = work.findtext("original_publication_year")

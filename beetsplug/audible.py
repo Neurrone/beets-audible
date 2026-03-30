@@ -5,6 +5,7 @@ import re
 import urllib.error
 from contextlib import suppress
 from tempfile import NamedTemporaryFile
+from typing import Sequence
 
 import mediafile
 import yaml
@@ -131,7 +132,7 @@ class Audible(MetadataSourcePlugin):
 
         self._recent_items = []
 
-    def candidates(self, items, artist, album, va_likely):
+    def candidates(self, items, artist, album, va_likely) -> list[AlbumInfo]:
         """Returns a list of AlbumInfo objects for Audible search results
         matching an album and artist (if not various).
         """
@@ -202,7 +203,7 @@ class Audible(MetadataSourcePlugin):
                 )
         return albums
 
-    def maybe_align_tracks_with_items(self, album_info, items, *, is_likely_match=True):
+    def maybe_align_tracks_with_items(self, album_info, items, *, is_likely_match=True) -> int | None:
         """Override chapter data from Audible with the current file list when needed."""
         if not is_likely_match or not items or not album_info.tracks:
             return None
@@ -231,7 +232,7 @@ class Audible(MetadataSourcePlugin):
         ]
         return chapter_count_from_audible
 
-    def get_album_from_yaml_metadata(self, data, items):
+    def get_album_from_yaml_metadata(self, data, items) -> AlbumInfo:
         """Returns an `AlbumInfo` object by populating it with details from metadata.yml"""
         title = data["title"]
         subtitle = data.get("subtitle")
@@ -312,7 +313,7 @@ class Audible(MetadataSourcePlugin):
             **common_attributes,
         )
 
-    def album_for_id(self, album_id):
+    def album_for_id(self, album_id) -> AlbumInfo | None:
         """
         Fetches book info by its asin and returns an AlbumInfo object
         or None if the book was not found.
@@ -337,7 +338,7 @@ class Audible(MetadataSourcePlugin):
             self._log.debug(f"Exception while getting book {asin}", exc_info=True)
             return None
 
-    def get_albums(self, query, region):
+    def get_albums(self, query, region) -> list[AlbumInfo]:
         """Returns a list of AlbumInfo objects for an Audible search query."""
 
         try:
@@ -367,7 +368,7 @@ class Audible(MetadataSourcePlugin):
             self._log.warn("Error while fetching book information from Audnex", exc_info=True)
             return []
 
-    def get_album_info(self, asin, region):
+    def get_album_info(self, asin, region) -> AlbumInfo:
         """Returns an AlbumInfo object for a book given its asin."""
 
         (book, chapters) = get_book_info(asin, region)
@@ -500,11 +501,11 @@ class Audible(MetadataSourcePlugin):
             **common_attributes,
         )
 
-    def track_for_id(self, track_id: str):
+    def track_for_id(self, track_id: str) -> None:
         self._log.debug("Searching for track {}", track_id)
         return None
 
-    def item_candidates(self, item, artist, title):
+    def item_candidates(self, item, artist, title) -> list[TrackInfo]:
         """Returns a list of TrackInfo objects for individual track search.
 
         Audiobooks are not searched by individual tracks, so this returns an empty list.
@@ -515,7 +516,7 @@ class Audible(MetadataSourcePlugin):
         return []
 
     @staticmethod
-    def on_write(item, path, tags):
+    def on_write(item, path, tags) -> None:
         # Strip unwanted tags that Beets automatically adds
         tags["mb_albumid"] = None
         tags["mb_trackid"] = None
@@ -531,7 +532,7 @@ class Audible(MetadataSourcePlugin):
                 # The "mvi" tag for m4b files only accepts integers
                 tags["mvi"] = int(tags.get("series_position"))
 
-    def fetch_art(self, session, task):
+    def fetch_art(self, session, task) -> None:
         # Only fetch art for albums
         if task.is_album:
             if task.album.artpath and os.path.isfile(task.album.artpath):
@@ -556,7 +557,7 @@ class Audible(MetadataSourcePlugin):
                     f"Error while downloading cover art for {title} by {author} from {cover_url}", exc_info=True
                 )
 
-    def fetch_image(self, url):
+    def fetch_image(self, url) -> bytes:
         """Downloads an image from a URL and returns a path to the downloaded image."""
         image = make_request(url)
         ext = url[-4:]  # e.g, ".jpg"
@@ -565,14 +566,14 @@ class Audible(MetadataSourcePlugin):
         self._log.debug("downloaded art to: {0}", util.displayable_path(fh.name))
         return util.bytestring_path(fh.name)
 
-    def on_import_task_files(self, task, session):
+    def on_import_task_files(self, task, session) -> None:
         self.write_book_description_and_narrator(task.imported_items())
         if self.config["fetch_art"] and task in self.cover_art:
             cover_path = self.cover_art.pop(task)
             task.album.set_art(cover_path, True)
             task.album.store()
 
-    def write_book_description_and_narrator(self, items):
+    def write_book_description_and_narrator(self, items) -> None:
         """Write description.txt, reader.txt and cover art"""
         if len(items) == 0:
             return
@@ -590,17 +591,17 @@ class Audible(MetadataSourcePlugin):
             with open(os.path.join(destination, b"reader.txt"), "w") as f:
                 f.write(narrator)
 
-    def on_import_task_created(self, session, task):
+    def on_import_task_created(self, session, task) -> None:
         """
         Remember the items for the current task so manual album ID lookups can align tracks.
         This is needed because album_for_id doesn't give us the items being imported
         """
         self._recent_items = list(task.items)
 
-    def before_choose_candidate_event(self, session, task):
+    def before_choose_candidate_event(self, session, task) -> Sequence[ui.commands.PromptChoice]:
         return [PromptChoice("r", "Region switch", self.book_level_region_switch)]
 
-    def book_level_region_switch(self, session, task):
+    def book_level_region_switch(self, session, task) -> None:
         """Prompts the book level region value"""
         available_region_codes = ", ".join(ui.colorize("text_diff_added", reg) for reg in AUDIBLE_REGIONS)
 
@@ -639,7 +640,7 @@ class Audible(MetadataSourcePlugin):
         task.lookup_candidates()
 
 
-def get_item_region(item):
+def get_item_region(item) -> str | None:
     """Get the value of the 'region' field, if it is available, or can be extracted from 'album_url'."""
     available_field_names = item.keys()
     album_url = None
