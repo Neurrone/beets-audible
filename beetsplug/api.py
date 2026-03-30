@@ -1,7 +1,7 @@
 import json
 import xml.etree.ElementTree as ET
 from time import sleep
-from typing import Optional
+from typing import Optional, AnyStr
 from urllib import parse, request
 from urllib.error import HTTPError
 
@@ -71,7 +71,7 @@ def get_audible_album_region(url: str) -> Optional[str]:
         return None
 
 
-def make_request(url: str) -> bytes:
+def make_request(url: str) -> AnyStr | None:
     """Makes a request to the specified url and returns received response
     The request will be retried up to 3 times in case of failure.
     """

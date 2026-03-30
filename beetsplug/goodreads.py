@@ -24,7 +24,7 @@ def get_original_date(self, asin: str, authors: str, title: str) -> dict:
     return original_date
 
 
-def goodreads_get_best_match(self, response: Element, author: str, title: str) -> Element:
+def goodreads_get_best_match(self, response: Element, author: str, title: str) -> Element | None:
     # returns best matching work from results
     author_cleaned = author.replace(" ", "")
     # get all works
