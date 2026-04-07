@@ -1,5 +1,34 @@
 # Changelog
 
+## v1.4.0 (2026-03-22)
+
+### Breaking Changes
+
+- Require Beets `>=2.7.1,<2.8`
+
+### Fix
+
+- Update Confuse to v2.2.0 to match the version Beets uses. Fixes #84
+
+## v1.3.1 (2026-02-08)
+
+### Fix
+
+- Require `confuse<2.2` to work around error when running in Docker, see #84
+- Require `mediafile<0.14.0` to work around error when running in Docker, see #83
+
+## v1.3.0 (2026-02-08)
+
+### Breaking Changes
+
+- Require Beets `>=2.6.1,<2.7`
+- Require Python `>=3.10`
+
+### Fix
+
+- Use the newly introduced `album_matched` event to align tracks for manual ASIN matches instead of relying on import-task state
+- Update use of deprecated Beets APIs (`PromptChoice` import path and logger warnings)
+
 ## v1.2.1 (2025-11-16)
 
 ### Fix
