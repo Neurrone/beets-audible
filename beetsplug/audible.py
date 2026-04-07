@@ -132,7 +132,6 @@ class Audible(MetadataSourcePlugin):
         region = mediafile.MediaField()
         self.add_media_field("region", region)
 
-
     def candidates(self, items, artist, album, va_likely) -> list[AlbumInfo]:
         """Returns a list of AlbumInfo objects for Audible search results
         matching an album and artist (if not various).
