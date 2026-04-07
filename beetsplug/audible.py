@@ -3,9 +3,9 @@ import os
 import pathlib
 import re
 import urllib.error
+from collections.abc import Sequence
 from contextlib import suppress
 from tempfile import NamedTemporaryFile
-from collections.abc import Sequence
 
 import mediafile
 import yaml
