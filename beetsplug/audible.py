@@ -5,7 +5,7 @@ import re
 import urllib.error
 from contextlib import suppress
 from tempfile import NamedTemporaryFile
-from typing import Sequence
+from collections.abc import Sequence
 
 import mediafile
 import yaml
