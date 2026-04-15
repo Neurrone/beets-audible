@@ -3,7 +3,6 @@ import os
 import pathlib
 import re
 import urllib.error
-from collections.abc import Sequence
 from contextlib import suppress
 from tempfile import NamedTemporaryFile
 
@@ -599,7 +598,7 @@ class Audible(MetadataSourcePlugin):
         match.extra_tracks = extra_tracks
         match.distance = distance(all_items, match.info, item_info_pairs)
 
-    def before_choose_candidate_event(self, session, task) -> Sequence[ui.commands.PromptChoice]:
+    def before_choose_candidate_event(self, session, task) -> list[ui.commands.PromptChoice]:
         return [PromptChoice("r", "Region switch", self.book_level_region_switch)]
 
     def book_level_region_switch(self, session, task) -> None:
