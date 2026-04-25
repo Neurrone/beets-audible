@@ -70,7 +70,7 @@ def get_audible_album_region(url: str) -> str | None:
         return None
 
 
-def make_request(url: str) -> bytes:
+def make_request(url: str) -> bytes | None:
     """Makes a request to the specified url and returns received response
     The request will be retried up to 3 times in case of failure.
     """
