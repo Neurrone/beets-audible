@@ -1,6 +1,6 @@
 [project]
 name = "beets-audible"
-version = "1.4.0"
+version = "1.5.0"
 description = "Beets plugin for audiobook management"
 authors = [
     { name = "Dickson Tan", email = "dickson.tan.2013@gmail.com" }
@@ -23,8 +23,7 @@ readme = "readme.md"
 requires-python = ">=3.10"
 
 dependencies = [
-  "beets >=2.7.1,<2.8",
-  "mediafile<0.14.0", # https://github.com/Neurrone/beets-audible/issues/83
+  "beets >=2.11,<2.12",
   "markdownify >=1,<2",
   "natsort >=8,<9",
   "tldextract >=5,<6",

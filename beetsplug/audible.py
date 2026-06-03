@@ -14,6 +14,7 @@ from beets.autotag.hooks import AlbumInfo, TrackInfo
 from beets.autotag.match import assign_items
 from beets.metadata_plugins import MetadataSourcePlugin
 from beets.util import PromptChoice
+from beets.util.color import colorize
 from natsort import os_sorted
 
 from .api import (
@@ -110,14 +111,6 @@ class Audible(MetadataSourcePlugin):
             mediafile.MP4StorageStyle("\xa9mvi", as_type=int),
         )
         self.add_media_field("mvi", mvi)
-
-        subtitle = mediafile.MediaField(
-            mediafile.MP3StorageStyle("TIT3"),
-            mediafile.MP4StorageStyle("----:com.apple.iTunes:SUBTITLE"),
-            mediafile.StorageStyle("TIT3"),
-            mediafile.ASFStorageStyle("WM/SubTitle"),
-        )
-        self.add_media_field("subtitle", subtitle)
 
         album_url = mediafile.MediaField(
             # disable reading / writing of WOAF for mp3, see https://github.com/Neurrone/beets-audible/issues/71
@@ -262,7 +255,6 @@ class Audible(MetadataSourcePlugin):
         common_attributes = {
             "artist_id": None,
             "album_sort": album_sort,
-            "composer": narrators,
             "grouping": content_group_description,
             "genres": genres,
             "series_name": series_name,
@@ -273,12 +265,13 @@ class Audible(MetadataSourcePlugin):
             "album_url": None,
             "region": None,
         }
+        track_attributes = {**common_attributes, "composers": data["narrators"]}
 
         naturally_sorted_items = os_sorted(items, key=lambda i: util.bytestring_path(i.path))
         # populate tracks by using some of the info from the files being imported
         tracks = [
             TrackInfo(
-                **common_attributes,
+                **track_attributes,
                 track_id=None,
                 artist=artists,
                 index=i + 1,
@@ -424,7 +417,6 @@ class Audible(MetadataSourcePlugin):
             "artist_id": None,
             "asin": asin,
             "album_sort": album_sort,
-            "composer": narrators,
             "grouping": content_group_description,
             "genres": genres,
             "series_name": series_name,
@@ -436,6 +428,7 @@ class Audible(MetadataSourcePlugin):
             "album_url": album_url,
             "region": region,
         }
+        track_attributes = {**common_attributes, "composers": [n.name for n in book.narrators]}
 
         tracks = [
             TrackInfo(
@@ -445,7 +438,7 @@ class Audible(MetadataSourcePlugin):
                 medium=1,
                 artist=artists,
                 length=c.length_ms / 1000,
-                **common_attributes,
+                **track_attributes,
             )
             for i, c in enumerate(chapters.chapters)
         ]
@@ -576,7 +569,7 @@ class Audible(MetadataSourcePlugin):
                 f.write(description)
 
         if self.config["write_reader_file"]:
-            narrator = item.composer
+            narrator = ", ".join(item.composers or [])
             with open(os.path.join(destination, b"reader.txt"), "w") as f:
                 f.write(narrator)
 
@@ -603,7 +596,7 @@ class Audible(MetadataSourcePlugin):
 
     def book_level_region_switch(self, session, task):
         """Prompts the book level region value"""
-        available_region_codes = ", ".join(ui.colorize("text_diff_added", reg) for reg in AUDIBLE_REGIONS)
+        available_region_codes = ", ".join(colorize("text_diff_added", reg) for reg in AUDIBLE_REGIONS)
 
         # config level region code
         current_config_region_code = self.config["region"].get()
@@ -612,12 +605,12 @@ class Audible(MetadataSourcePlugin):
         book_region_code = get_item_region(task.items[0])
         if book_region_code is None:
             current_book_region_code = "--"
-            ui_current_config_region_code = ui.colorize("text_highlight_minor", current_config_region_code)
-            ui_current_book_region_code = ui.colorize("text_highlight_minor", current_book_region_code)
+            ui_current_config_region_code = colorize("text_highlight_minor", current_config_region_code)
+            ui_current_book_region_code = colorize("text_highlight_minor", current_book_region_code)
         else:
             current_book_region_code = book_region_code
-            ui_current_config_region_code = ui.colorize("text_faint", current_config_region_code)
-            ui_current_book_region_code = ui.colorize("text_highlight_minor", current_book_region_code)
+            ui_current_config_region_code = colorize("text_faint", current_config_region_code)
+            ui_current_book_region_code = colorize("text_highlight_minor", current_book_region_code)
 
         message = (
             f"Enter region code "
@@ -635,7 +628,7 @@ class Audible(MetadataSourcePlugin):
                 color_name = "changed"
                 current_book_region_code = region_code
 
-        ui.print_("Current book region code:", ui.colorize(color_name, current_book_region_code))
+        ui.print_("Current book region code:", colorize(color_name, current_book_region_code))
 
         task.lookup_candidates()
 

@@ -1,5 +1,12 @@
 # Changelog
 
+## v1.5.0 (2026-06-03)
+
+### Breaking Changes
+
+- Update to Beets 2.11.0
+- Stop registering a custom `subtitle` media field and rely on Beets 2.11's built-in subtitle field. As a result, M4B freeform subtitle tag writes are no longer added by this plugin.
+
 ## v1.4.0 (2026-03-22)
 
 ### Breaking Changes
