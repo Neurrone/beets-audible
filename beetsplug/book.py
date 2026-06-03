@@ -117,7 +117,7 @@ class Book:
         self.region = region
 
     @staticmethod
-    def from_audnex_book(b: dict):
+    def from_audnex_book(b: dict) -> "Book":
         """
         Creates a `Book` from an Audnex book result
         """
@@ -209,7 +209,7 @@ class BookChapters:
         self.runtime_length_sec = runtime_length_sec
 
     @staticmethod
-    def from_audnex_chapter_info(c: dict):
+    def from_audnex_chapter_info(c: dict) -> "BookChapters":
         """
         Creates a `BookChapters` instance from audnex's /book/{asin}/chapters endpoint
         """

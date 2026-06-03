@@ -24,7 +24,7 @@ def get_original_date(self, asin: str, authors: str, title: str) -> dict:
     return original_date
 
 
-def goodreads_get_best_match(self, response: Element, author: str, title: str) -> Element:
+def goodreads_get_best_match(self, response: Element, author: str, title: str) -> Element | None:
     # returns best matching work from results
     author_cleaned = author.replace(" ", "")
     # get all works
@@ -50,7 +50,7 @@ def goodreads_get_total_result(response: Element) -> int:
     return int(response.findtext("./search/total-results"))
 
 
-def parse_original_date(work: Element) -> dict:
+def parse_original_date(work: Element) -> dict[str, int | None]:
     original_date = {}
     if work is not None:
         year = work.findtext("original_publication_year")
