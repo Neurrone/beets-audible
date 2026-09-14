@@ -6,6 +6,10 @@
 
 - Update to require Beets 2.14.0
 
+### Other
+
+- Build with `uv_build>=0.12.0,<0.13.0`, fixes #87
+
 ## v1.6.0 (2026-06-26)
 
 ### Breaking Changes
