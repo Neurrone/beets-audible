@@ -13,7 +13,7 @@ from beets.autotag.distance import distance
 from beets.autotag.hooks import AlbumInfo, TrackInfo
 from beets.autotag.match import assign_items
 from beets.metadata_plugins import MetadataSourcePlugin
-from beets.util import PromptChoice
+from beets.util import PromptChoice, get_most_common_tags
 from beets.util.color import colorize
 from natsort import os_sorted
 
@@ -589,7 +589,7 @@ class Audible(MetadataSourcePlugin):
         match.mapping = dict(item_info_pairs)
         match.extra_items = extra_items
         match.extra_tracks = extra_tracks
-        match.distance = distance(all_items, match.info, item_info_pairs)
+        match.distance = distance(get_most_common_tags(all_items), match.info, item_info_pairs, len(extra_items))
 
     def before_choose_candidate_event(self, session, task) -> list[PromptChoice]:
         return [PromptChoice("r", "Region switch", self.book_level_region_switch)]

@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.7.0 (2026-09-14)
+
+### Breaking Changes
+
+- Update to require Beets 2.14.0
+
 ## v1.6.0 (2026-06-26)
 
 ### Breaking Changes
