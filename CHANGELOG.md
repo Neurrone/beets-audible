@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.7.1 (2026-09-16)
+
+### Fix
+
+- Change the import prompt shortcut for switching a book's region from `R` to `N`. Beets 2.14.0 added a built-in `R` (Rescan directory) choice, which caused the plugin's choice to be dropped with a conflict warning on every import.
+
 ## v1.7.0 (2026-09-14)
 
 ### Breaking Changes

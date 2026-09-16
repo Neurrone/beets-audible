@@ -592,7 +592,7 @@ class Audible(MetadataSourcePlugin):
         match.distance = distance(get_most_common_tags(all_items), match.info, item_info_pairs, len(extra_items))
 
     def before_choose_candidate_event(self, session, task) -> list[PromptChoice]:
-        return [PromptChoice("r", "Region switch", self.book_level_region_switch)]
+        return [PromptChoice("n", "regioN switch", self.book_level_region_switch)]
 
     def book_level_region_switch(self, session, task) -> None:
         """Prompts the book level region value"""
